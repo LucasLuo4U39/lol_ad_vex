@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "computedBy": "compute_event_thresholds.py",
+    "thresholdSource": "train_live_event_model.py 训练时由 OOF 预测（GroupKFold 5, gameId）的 precision_recall_curve argmax F1 计算，存于 live_event_model/metrics.json",
+    "inSampleSource": "最终模型对 live_dataset.csv 每 10 行抽样的 in-sample argmax F1 阈值（最终模型见过训练数据，为乐观上界，仅审计对照）",
+    "usage": "运行时的触发口径（T60）：probability >= threshold 且连续 confirmations 次刷新都比对方同类事件高出 minGap，同一类提醒间隔不小于 cooldownSeconds",
+    "rows": 579790,
+    "labels": [
+      "own_kill_30s",
+      "enemy_kill_30s",
+      "own_gank_60s",
+      "enemy_gank_60s"
+    ],
+    "generatedAt": "2026-11-12T17:25:22.604438+08:00"
+  },
+  "labels": {
+    "own_kill_30s": {
+      "threshold": 0.352111,
+      "bestF1": 0.514304,
+      "bestPrecision": 0.359739,
+      "bestRecall": 0.90175,
+      "positive": 189740,
+      "positiveRate": 0.327256,
+      "inSampleThreshold": 0.425065,
+      "inSampleF1": 0.52175,
+      "inSampleRows": 57979
+    },
+    "enemy_kill_30s": {
+      "threshold": 0.350137,
+      "bestF1": 0.514769,
+      "bestPrecision": 0.359165,
+      "bestRecall": 0.908264,
+      "positive": 189740,
+      "positiveRate": 0.327256,
+      "inSampleThreshold": 0.432934,
+      "inSampleF1": 0.524767,
+      "inSampleRows": 57979
+    },
+    "own_gank_60s": {
+      "threshold": 0.391506,
+      "bestF1": 0.547573,
+      "bestPrecision": 0.397884,
+      "bestRecall": 0.87782,
+      "positive": 205410,
+      "positiveRate": 0.354283,
+      "inSampleThreshold": 0.432777,
+      "inSampleF1": 0.55476,
+      "inSampleRows": 57979
+    },
+    "enemy_gank_60s": {
+      "threshold": 0.389624,
+      "bestF1": 0.547493,
+      "bestPrecision": 0.393816,
+      "bestRecall": 0.897863,
+      "positive": 205410,
+      "positiveRate": 0.354283,
+      "inSampleThreshold": 0.421235,
+      "inSampleF1": 0.556622,
+      "inSampleRows": 57979
+    }
+  },
+  "policy": {
+    "minGap": 0.1,
+    "confirmations": 2,
+    "cooldownSeconds": 180,
+    "alertBudgetPerGame": 8,
+    "note": "T60：阈值之外再要求连续确认 + 比对方高 minGap + 冷却，避免大半时间都在报警；budget 口径待拿到训练 CSV 后复算"
+  }
+}

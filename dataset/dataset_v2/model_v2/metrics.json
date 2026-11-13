@@ -1,0 +1,485 @@
+{
+  "dataset": "../dataset_blue.csv",
+  "rows": 55709,
+  "games": 2298,
+  "features": 87,
+  "folds": 5,
+  "overall": {
+    "auc": 0.8205694409406264,
+    "logLoss": 0.512128197688332,
+    "brier": 0.17187696222538626,
+    "accuracy": 0.7386059703100037,
+    "rows": 55709,
+    "baselineBrier": 0.25,
+    "baselineLogLoss": 0.6931471805599453
+  },
+  "baselines": {
+    "constant": {
+      "auc": 0.460523729014735,
+      "logLoss": 0.6918814306690642,
+      "brier": 0.24936454296471317,
+      "accuracy": 0.5374715037067619,
+      "rows": 55709
+    },
+    "goldDiffOnly": {
+      "auc": 0.8123649960718742,
+      "logLoss": 0.5226987726032631,
+      "brier": 0.1761691273167493,
+      "accuracy": 0.7300077186810031,
+      "rows": 55709
+    },
+    "goldXpMinute": {
+      "auc": 0.8138817471660071,
+      "logLoss": 0.522043468586285,
+      "brier": 0.1757914769283179,
+      "accuracy": 0.7318566120375523,
+      "rows": 55709
+    }
+  },
+  "perMinute": [
+    {
+      "auc": 0.5175833438216303,
+      "logLoss": 0.6893721805706395,
+      "brier": 0.2480824140700405,
+      "accuracy": 0.5526544821583986,
+      "rows": 2298,
+      "minute": 1
+    },
+    {
+      "auc": 0.5867992387403365,
+      "logLoss": 0.6784446753526208,
+      "brier": 0.24274212177769516,
+      "accuracy": 0.5805047867711053,
+      "rows": 2298,
+      "minute": 2
+    },
+    {
+      "auc": 0.6238931032773067,
+      "logLoss": 0.6656911932427496,
+      "brier": 0.23660077866483445,
+      "accuracy": 0.6040034812880766,
+      "rows": 2298,
+      "minute": 3
+    },
+    {
+      "auc": 0.6805104558785952,
+      "logLoss": 0.6374557944264608,
+      "brier": 0.22330014629330386,
+      "accuracy": 0.644473455178416,
+      "rows": 2298,
+      "minute": 4
+    },
+    {
+      "auc": 0.7069478293039203,
+      "logLoss": 0.6214116906319969,
+      "brier": 0.21595215678362772,
+      "accuracy": 0.660574412532637,
+      "rows": 2298,
+      "minute": 5
+    },
+    {
+      "auc": 0.7378597009119097,
+      "logLoss": 0.5979526439367192,
+      "brier": 0.20582763453579153,
+      "accuracy": 0.6718885987815492,
+      "rows": 2298,
+      "minute": 6
+    },
+    {
+      "auc": 0.7689081110767859,
+      "logLoss": 0.5728227150209315,
+      "brier": 0.1946950115155909,
+      "accuracy": 0.7097476066144474,
+      "rows": 2298,
+      "minute": 7
+    },
+    {
+      "auc": 0.778677101568668,
+      "logLoss": 0.5616412862513275,
+      "brier": 0.19053925188305643,
+      "accuracy": 0.7106179286335944,
+      "rows": 2298,
+      "minute": 8
+    },
+    {
+      "auc": 0.792026605948962,
+      "logLoss": 0.5474870620826129,
+      "brier": 0.18486209340594378,
+      "accuracy": 0.7175805047867712,
+      "rows": 2298,
+      "minute": 9
+    },
+    {
+      "auc": 0.8147400618618825,
+      "logLoss": 0.5239376379317564,
+      "brier": 0.17512852715731847,
+      "accuracy": 0.7341166231505657,
+      "rows": 2298,
+      "minute": 10
+    },
+    {
+      "auc": 0.82897770063004,
+      "logLoss": 0.5060548028013337,
+      "brier": 0.16836526708690994,
+      "accuracy": 0.7515257192676548,
+      "rows": 2294,
+      "minute": 11
+    },
+    {
+      "auc": 0.8475714285714288,
+      "logLoss": 0.48145911854137974,
+      "brier": 0.15811881754673268,
+      "accuracy": 0.774235807860262,
+      "rows": 2290,
+      "minute": 12
+    },
+    {
+      "auc": 0.8633869883708024,
+      "logLoss": 0.45928100721662596,
+      "brier": 0.14957337872199464,
+      "accuracy": 0.7882764654418197,
+      "rows": 2286,
+      "minute": 13
+    },
+    {
+      "auc": 0.870962233828847,
+      "logLoss": 0.44789621557652365,
+      "brier": 0.14555920720710805,
+      "accuracy": 0.7897503285151117,
+      "rows": 2283,
+      "minute": 14
+    },
+    {
+      "auc": 0.8822162688144386,
+      "logLoss": 0.42998606374570036,
+      "brier": 0.13890357170232795,
+      "accuracy": 0.8030701754385965,
+      "rows": 2280,
+      "minute": 15
+    },
+    {
+      "auc": 0.858394385638211,
+      "logLoss": 0.4689563824072901,
+      "brier": 0.1530829717482905,
+      "accuracy": 0.7789526686807654,
+      "rows": 1986,
+      "minute": 16
+    },
+    {
+      "auc": 0.8689446533293981,
+      "logLoss": 0.45253684535855637,
+      "brier": 0.14690889838016424,
+      "accuracy": 0.7922680412371134,
+      "rows": 1940,
+      "minute": 17
+    },
+    {
+      "auc": 0.878421756674103,
+      "logLoss": 0.43723831098648586,
+      "brier": 0.14147381816715,
+      "accuracy": 0.7996861924686193,
+      "rows": 1912,
+      "minute": 18
+    },
+    {
+      "auc": 0.8810164032473136,
+      "logLoss": 0.43299219162066344,
+      "brier": 0.13942473309187367,
+      "accuracy": 0.8029801324503312,
+      "rows": 1812,
+      "minute": 19
+    },
+    {
+      "auc": 0.8855809717040819,
+      "logLoss": 0.42517907177501096,
+      "brier": 0.13725407821558636,
+      "accuracy": 0.810244470314319,
+      "rows": 1718,
+      "minute": 20
+    },
+    {
+      "auc": 0.893652907636926,
+      "logLoss": 0.41159491334576753,
+      "brier": 0.132585120196185,
+      "accuracy": 0.8143382352941176,
+      "rows": 1632,
+      "minute": 21
+    },
+    {
+      "auc": 0.9039975146698922,
+      "logLoss": 0.3926492542679831,
+      "brier": 0.12578985809216753,
+      "accuracy": 0.8205128205128205,
+      "rows": 1560,
+      "minute": 22
+    },
+    {
+      "auc": 0.906083597737619,
+      "logLoss": 0.38986660171019616,
+      "brier": 0.12448357892430933,
+      "accuracy": 0.820853743876837,
+      "rows": 1429,
+      "minute": 23
+    },
+    {
+      "auc": 0.9017365492192456,
+      "logLoss": 0.3972994813340578,
+      "brier": 0.12597531969286724,
+      "accuracy": 0.8164852255054432,
+      "rows": 1286,
+      "minute": 24
+    },
+    {
+      "auc": 0.8930541494094186,
+      "logLoss": 0.41353965474170956,
+      "brier": 0.13112632550322276,
+      "accuracy": 0.8148471615720524,
+      "rows": 1145,
+      "minute": 25
+    },
+    {
+      "auc": 0.8940351123485966,
+      "logLoss": 0.41353355188722374,
+      "brier": 0.13131309404363495,
+      "accuracy": 0.8177339901477833,
+      "rows": 1015,
+      "minute": 26
+    },
+    {
+      "auc": 0.8796276324005222,
+      "logLoss": 0.4399437327289205,
+      "brier": 0.14200717288126935,
+      "accuracy": 0.7895362663495838,
+      "rows": 841,
+      "minute": 27
+    },
+    {
+      "auc": 0.8700570489188375,
+      "logLoss": 0.4537057759105366,
+      "brier": 0.14645025301523884,
+      "accuracy": 0.8034188034188035,
+      "rows": 702,
+      "minute": 28
+    },
+    {
+      "auc": 0.8713920862050869,
+      "logLoss": 0.4527010755378539,
+      "brier": 0.1465979910596006,
+      "accuracy": 0.78839590443686,
+      "rows": 586,
+      "minute": 29
+    },
+    {
+      "auc": 0.8611015292629642,
+      "logLoss": 0.46888700769121483,
+      "brier": 0.15371119461731425,
+      "accuracy": 0.7789934354485777,
+      "rows": 457,
+      "minute": 30
+    },
+    {
+      "auc": 0.851744908097367,
+      "logLoss": 0.48139687363321537,
+      "brier": 0.15783318270785546,
+      "accuracy": 0.7771587743732591,
+      "rows": 359,
+      "minute": 31
+    },
+    {
+      "auc": 0.8690343443354148,
+      "logLoss": 0.4537681237933633,
+      "brier": 0.14843783336169247,
+      "accuracy": 0.774074074074074,
+      "rows": 270,
+      "minute": 32
+    },
+    {
+      "auc": 0.8625558715969118,
+      "logLoss": 0.4623472599818806,
+      "brier": 0.15193962256895366,
+      "accuracy": 0.7839195979899497,
+      "rows": 199,
+      "minute": 33
+    },
+    {
+      "auc": 0.875983578515224,
+      "logLoss": 0.45245729560959175,
+      "brier": 0.14332978454204,
+      "accuracy": 0.7973856209150327,
+      "rows": 153,
+      "minute": 34
+    },
+    {
+      "auc": 0.8459383753501402,
+      "logLoss": 0.4857051885283208,
+      "brier": 0.1576370859903811,
+      "accuracy": 0.7663551401869159,
+      "rows": 107,
+      "minute": 35
+    },
+    {
+      "auc": 0.812037037037037,
+      "logLoss": 0.5398023141486061,
+      "brier": 0.1739392002560725,
+      "accuracy": 0.7761194029850746,
+      "rows": 67,
+      "minute": 36
+    },
+    {
+      "auc": 0.8021778584392014,
+      "logLoss": 0.5660121243913884,
+      "brier": 0.18196713511912735,
+      "accuracy": 0.7708333333333334,
+      "rows": 48,
+      "minute": 37
+    },
+    {
+      "auc": 0.6783216783216783,
+      "logLoss": 0.7333659483990557,
+      "brier": 0.24629170387852536,
+      "accuracy": 0.7083333333333334,
+      "rows": 24,
+      "minute": 38
+    }
+  ],
+  "foldMetrics": [
+    {
+      "auc": 0.8203962616714102,
+      "logLoss": 0.515877009946209,
+      "brier": 0.17435236044773117,
+      "accuracy": 0.7315628925174951,
+      "rows": 11146,
+      "fold": 1,
+      "bestIteration": 254
+    },
+    {
+      "auc": 0.8055493005878394,
+      "logLoss": 0.5294810716788024,
+      "brier": 0.17825814775923482,
+      "accuracy": 0.7350619056163646,
+      "rows": 11146,
+      "fold": 2,
+      "bestIteration": 93
+    },
+    {
+      "auc": 0.837505279801367,
+      "logLoss": 0.4926743958363661,
+      "brier": 0.1631488043190587,
+      "accuracy": 0.7552981321839081,
+      "rows": 11136,
+      "fold": 3,
+      "bestIteration": 148
+    },
+    {
+      "auc": 0.8318217029898963,
+      "logLoss": 0.49946725164756023,
+      "brier": 0.16723704032870046,
+      "accuracy": 0.7420977011494253,
+      "rows": 11136,
+      "fold": 4,
+      "bestIteration": 141
+    },
+    {
+      "auc": 0.8145703490611942,
+      "logLoss": 0.5231134321082009,
+      "brier": 0.17637686838418606,
+      "accuracy": 0.7290264692687304,
+      "rows": 11145,
+      "fold": 5,
+      "bestIteration": 96
+    }
+  ],
+  "finalEstimators": 146,
+  "featureColumns": [
+    "minute",
+    "patch",
+    "gold_diff",
+    "current_gold_diff",
+    "xp_diff",
+    "level_diff",
+    "cs_diff",
+    "kills_diff",
+    "deaths_diff",
+    "assists_diff",
+    "tower_diff",
+    "inhibitor_diff",
+    "dragon_diff",
+    "elder_dragon_diff",
+    "baron_diff",
+    "herald_diff",
+    "grub_diff",
+    "atakhan_diff",
+    "plate_diff",
+    "wards_placed_diff",
+    "wards_killed_diff",
+    "gold_diff_slope_5m",
+    "xp_diff_slope_5m",
+    "kills_last_5m",
+    "towers_last_5m",
+    "objectives_last_5m",
+    "kills_last_min",
+    "objectives_last_min",
+    "kill_lane_top_diff",
+    "kill_lane_mid_diff",
+    "kill_lane_bot_diff",
+    "kill_lane_jungle_diff",
+    "first_blood",
+    "jungler_zone_top_diff",
+    "jungler_zone_mid_diff",
+    "jungler_zone_bot_diff",
+    "jungler_near_top_diff",
+    "jungler_near_mid_diff",
+    "jungler_near_bot_diff",
+    "jungler_gank_top_diff",
+    "jungler_gank_mid_diff",
+    "jungler_gank_bot_diff",
+    "gold_diff_TOP",
+    "xp_diff_TOP",
+    "level_diff_TOP",
+    "cs_diff_TOP",
+    "kills_diff_TOP",
+    "deaths_diff_TOP",
+    "assists_diff_TOP",
+    "gold_diff_JUNGLE",
+    "xp_diff_JUNGLE",
+    "level_diff_JUNGLE",
+    "cs_diff_JUNGLE",
+    "kills_diff_JUNGLE",
+    "deaths_diff_JUNGLE",
+    "assists_diff_JUNGLE",
+    "gold_diff_MIDDLE",
+    "xp_diff_MIDDLE",
+    "level_diff_MIDDLE",
+    "cs_diff_MIDDLE",
+    "kills_diff_MIDDLE",
+    "deaths_diff_MIDDLE",
+    "assists_diff_MIDDLE",
+    "gold_diff_BOTTOM",
+    "xp_diff_BOTTOM",
+    "level_diff_BOTTOM",
+    "cs_diff_BOTTOM",
+    "kills_diff_BOTTOM",
+    "deaths_diff_BOTTOM",
+    "assists_diff_BOTTOM",
+    "gold_diff_UTILITY",
+    "xp_diff_UTILITY",
+    "level_diff_UTILITY",
+    "cs_diff_UTILITY",
+    "kills_diff_UTILITY",
+    "deaths_diff_UTILITY",
+    "assists_diff_UTILITY",
+    "blue_jungle_start_blue",
+    "blue_jungle_start_red",
+    "blue_jungle_start_wolves",
+    "blue_jungle_start_raptors",
+    "red_jungle_start_blue",
+    "red_jungle_start_red",
+    "red_jungle_start_wolves",
+    "red_jungle_start_raptors",
+    "blue_jungle_start_invade",
+    "red_jungle_start_invade"
+  ],
+  "categoricalColumns": [
+    "patch"
+  ]
+}

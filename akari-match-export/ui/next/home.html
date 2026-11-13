@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoLAdvisor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B45309'/><path d='M8 21l5-5 4 4 7-10' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="../design-system.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 16l4.5-4.5 3.5 3.5L18 8" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span>
+        <span class="brand-name" style="display:block">LoLAdvisor</span>
+        <span class="brand-sub" style="display:block">DESKTOP</span>
+      </span>
+    </div>
+    <div class="grow"></div>
+    <div class="row row-8" style="flex:none">
+      <span class="pill pill-green" id="pillLcu"><span class="status-dot live"></span>LCU 已连接</span>
+      <span class="pill" id="pillVersion">v2.3.0</span>
+    </div>
+  </div>
+</header>
+
+<main class="container" style="padding-top:14px;padding-bottom:16px">
+  <div id="viewStatus"></div>
+
+  <div id="viewMain">
+    <section class="hero entrance" style="--i:0;grid-template-columns:auto minmax(0,1fr) auto">
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="54"></circle>
+          <circle class="ring-value" id="ringValue" cx="60" cy="60" r="54"></circle>
+        </svg>
+        <div class="ring-center">
+          <span class="num" id="winNum">—</span>
+          <span class="label">我方胜率</span>
+        </div>
+      </div>
+      <div class="stack stack-10" style="min-width:0">
+        <div class="hero-sub" id="heroSub"></div>
+        <div class="curve-wrap">
+          <svg class="curve" id="curve" viewBox="0 0 600 88" height="88" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="homeGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#b45309" stop-opacity=".16"/>
+                <stop offset="100%" stop-color="#b45309" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path class="curve-area" fill="url(#homeGrad)" d=""></path>
+            <path class="curve-line" id="curveLine" style="stroke:var(--curve-main)" d=""></path>
+            <circle class="curve-last" r="3.4" style="fill:var(--curve-main)" cx="-100" cy="-100"></circle>
+          </svg>
+          <div class="curve-y"><span id="curveMax">—</span><span id="curveMin">—</span></div>
+        </div>
+        <div class="curve-x"><span>开局</span><span class="faint" id="curveMid">—</span><span id="curveNow">现在</span></div>
+      </div>
+      <div class="stack stack-8" style="flex:none;align-self:center">
+        <button type="button" class="btn btn-primary" id="btnDraft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+          打开选人助手
+        </button>
+        <button type="button" class="btn btn-secondary" id="btnDash">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V19"/></svg>
+          打开 Web 仪表盘
+        </button>
+      </div>
+    </section>
+
+    <div class="grid grid-3" style="margin-top:10px">
+      <section class="card entrance" style="--i:1">
+        <h2 class="card-title">对局状态</h2>
+        <div class="row" style="align-items:baseline;gap:10px">
+          <span class="hero-num" id="clockNum" style="font-size:30px">--:--</span>
+          <span class="pill" id="pillMode">等待对局</span>
+        </div>
+        <div class="kv" style="margin-top:8px" id="gameKv"></div>
+      </section>
+      <section class="card entrance" style="--i:2">
+        <h2 class="card-title">赛前实力（段位分）<span id="rankPill"></span></h2>
+        <div class="kv" id="rankKv"></div>
+      </section>
+      <section class="card entrance" style="--i:3">
+        <h2 class="card-title">团队差（我方 − 敌方）</h2>
+        <div class="diffgrid" id="diffGrid" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+      </section>
+    </div>
+
+    <div class="grid grid-2c" style="margin-top:10px">
+      <section class="card entrance" style="--i:4">
+        <h2 class="card-title">建议</h2>
+        <div id="advice"></div>
+      </section>
+      <section class="card entrance" style="--i:5">
+        <h2 class="card-title">最近事件</h2>
+        <ul class="feed" id="feed" style="max-height:132px"></ul>
+      </section>
+    </div>
+
+    <section class="card entrance" style="--i:6;margin-top:10px;padding:10px 16px">
+      <h2 class="card-title" style="margin-bottom:8px">设置与自检 <span class="sub" id="selftestAt"></span></h2>
+      <div class="row" style="flex-wrap:wrap;gap:10px 14px">
+        <span class="setting-inline"><span class="k">轮询间隔</span><span class="v" id="settingInterval">—</span></span>
+        <span class="setting-inline">段位解析<button type="button" class="switch" role="switch" aria-checked="false" aria-label="段位解析" data-key="ranks"></button></span>
+        <span class="setting-inline">LLM 建议<button type="button" class="switch" role="switch" aria-checked="false" aria-label="LLM 建议" data-key="llm"></button></span>
+        <span class="setting-inline">自动打开选人助手<button type="button" class="switch" role="switch" aria-checked="false" aria-label="自动打开选人助手" data-key="autoOpenDraft"></button></span>
+        <span class="pill" id="selfPill">自检 —</span>
+        <span class="selftest-line" id="selftestLine" style="min-width:0;flex:0 1 200px">—</span>
+        <button type="button" class="btn btn-sm btn-soft" id="btnSelftest">运行自检</button>
+        <button type="button" class="btn btn-sm btn-secondary" id="btnDiag">查看诊断</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="demo-data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  const IS_DEMO = params.get("demo") === "1";
+  const DEMO = window.LOL_DEMO;
+  const UI = DEMO.UI;
+  UI.bootTheme(params);
+  const $ = (id) => document.getElementById(id);
+
+  const SRC_CN = { live: "实时模式", replay: "回放模式", spectator: "观战模式" };
+  const GOLD_CN = { sgp: "SGP 1 分钟口袋金币", estimate: "装备估算", live: "实时" };
+
+  function rankKindOf(s, lcu) {
+    const rk = s.rank;
+    const st = s.rankStatus || null;
+    // home 的 /api/home 里 lcu 对象已合并 rank_lookup.status() 诊断字段，
+    // 当 state.rankStatus 尚未透传（T17 前）时用 lcu 字段降级推导。
+    const use = st || ((lcu && (lcu.lastError != null || lcu.lastNote != null || lcu.queries != null || lcu.connected === false)) ? lcu : null);
+    if (rk) return "ok";
+    if (use && use.state) return use.state;
+    if (use && (use.connected === false || use.port == null)) return "unconnected";
+    if (use && (use.lastError || use.lastNote || (use.lookupReasons && Object.keys(use.lookupReasons).length))) return "failed";
+    if (use && (use.port || use.queries != null)) return "resolving";
+    return "resolving"; // 无诊断信息（旧接口）：等待解析，不再臆断未连接
+  }
+
+  function rankStateHtml(kind, st) {
+    st = st || {};
+    if (kind === "unconnected") {
+      return '<div class="rank-state"><div class="t1">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5M6 8h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><path d="M12 14v7"/></svg>' +
+        "客户端未连接</div>" +
+        '<div class="hint">请启动并登录英雄联盟客户端；连接后将自动发现并解析双方段位。</div></div>';
+    }
+    if (kind === "resolving") {
+      return '<div class="rank-state"><div class="t1"><span class="spin-mini"></span>正在解析段位…</div>' +
+        '<div class="hint">已连接客户端（端口 ' + UI.esc(st.port || "—") + "），正在读取双方段位数据，请稍候。</div></div>";
+    }
+    const lr = st.lookupReasons || {};
+    const names = Object.keys(lr);
+    let reason = st.lastError || st.lastNote || "";
+    if (!reason && names.length) reason = names[0] + "：" + lr[names[0]];
+    if (!reason) reason = "未知原因";
+    const http = st.lastHttpStatus ? "（HTTP " + st.lastHttpStatus + "）" : "";
+    let hint = "已尝试 " + (st.queries || 0) + " 次查询" + (st.errors ? "，失败 " + st.errors + " 次" : "") + "；恢复后会自动更新。";
+    if (names.length && st.lastError) hint += " 另有：" + names[0] + "：" + lr[names[0]];
+    return '<div class="rank-state fail"><div class="t1">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4 3 19h18L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="16.8" r=".5" fill="currentColor"/></svg>' +
+      "解析失败</div>" +
+      '<div class="reason">' + UI.esc(reason) + " " + http + "</div>" +
+      '<div class="hint">' + UI.esc(hint) + "</div></div>";
+  }
+
+  /* ---------------------------------------------------------- 桥接动作 */
+  const bridge = window.lolAdvisor || {};
+  function callBridge(name, fallbackText) {
+    if (typeof bridge[name] === "function") {
+      try { bridge[name](); return; } catch (e) {}
+    }
+    UI.toast(fallbackText);
+  }
+  function openDraft(url) {
+    if (typeof bridge.openDraft === "function") { try { bridge.openDraft(); return; } catch (e) {} }
+    if (!IS_DEMO) { try { window.open(url || "http://127.0.0.1:8788", "_blank"); return; } catch (e) {} }
+    UI.toast("演示模式：接入桌面版后将在此打开选人助手窗口");
+  }
+  function openDashboard(url) {
+    if (typeof bridge.openDashboard === "function") { try { bridge.openDashboard(); return; } catch (e) {} }
+    if (!IS_DEMO) { try { window.open(url || "http://127.0.0.1:8765", "_blank"); return; } catch (e) {} }
+    UI.toast("演示模式：接入桌面版后将在此打开 Web 仪表盘");
+  }
+
+  /* ---------------------------------------------------------- 渲染 */
+  function render(home) {
+    showView("main");
+    const s = home.state || {};
+    const wp = s.winProb;
+    const lcu = home.lcu || {};
+    const rkKind = rankKindOf(s, lcu);
+
+    /* 顶栏 */
+    $("pillLcu").className = "pill" + (lcu.connected ? " pill-green" : "");
+    $("pillLcu").innerHTML = '<span class="status-dot' + (lcu.connected ? " live" : " off") + '"></span>' +
+      (lcu.connected ? "LCU 已连接（端口 " + lcu.port + "）" : "LCU 未连接");
+    $("pillVersion").textContent = home.version || "v2.3.0";
+
+    /* 英雄区 */
+    const sub = [];
+    if (s.ok) {
+      sub.push(SRC_CN[s.source] || s.source);
+      if (s.selfName) sub.push(s.selfName + (s.selfChampion ? "（" + s.selfChampion + "）" : ""));
+      if (rkKind === "ok") sub.push("段位已解析");
+      else sub.push({ unconnected: "段位未连接", resolving: "段位解析中", failed: "段位解析失败" }[rkKind]);
+      if (s.model) sub.push(s.model);
+      if (s.goldSource) sub.push("金币 · " + (GOLD_CN[s.goldSource] || s.goldSource));
+    } else {
+      sub.push("等待对局…");
+    }
+    $("heroSub").innerHTML = sub.map((t) => '<span class="pill">' + UI.esc(t) + "</span>").join("");
+
+    if (wp === null || wp === undefined) {
+      $("winNum").textContent = "—";
+      UI.setRing($("ringValue"), 0);
+      $("ringValue").setAttribute("class", "ring-value");
+    } else {
+      UI.countUp($("winNum"), wp * 100, { fmt: (v) => v.toFixed(1) + "%", minDelta: 0.15 });
+      UI.setRing($("ringValue"), wp);
+      $("ringValue").setAttribute("class", "ring-value " + (wp >= 0.6 ? "green" : wp <= 0.4 ? "red" : "amber"));
+    }
+
+    const hist = s.history || {};
+    const r = UI.drawCurve($("curve"), hist.winProb || [], { h: 88, min: 0, max: 1 });
+    if (r) {
+      $("curveMax").textContent = (r.hi * 100).toFixed(0) + "%";
+      $("curveMin").textContent = (r.lo * 100).toFixed(0) + "%";
+    }
+    const ht = hist.t || [];
+    $("curveMid").textContent = ht.length ? UI.mmss(ht[Math.floor(ht.length / 2)]) : "—";
+    $("curveNow").textContent = s.clock && s.clock !== "--:--" ? s.clock : (ht.length ? UI.mmss(ht[ht.length - 1]) : "现在");
+
+    /* 对局状态 */
+    $("clockNum").textContent = s.clock || "--:--";
+    $("pillMode").textContent = s.ok ? (SRC_CN[s.source] || s.source) : "等待对局";
+    const o = s.own || {};
+    $("gameKv").innerHTML = s.ok
+      ? '<span class="k">自己</span><span class="v">' + (o.level != null ? o.level + " 级" : "—") + " · " +
+        (o.kills != null ? o.kills : "—") + "/" + (o.deaths != null ? o.deaths : "—") + "/" + (o.assists != null ? o.assists : "—") + "</span>" +
+        '<span class="k">补刀 · 金币</span><span class="v">' + (o.cs != null ? UI.fmtInt(o.cs) : "—") + " · " +
+        (o.gold != null ? UI.fmtInt(o.gold) : "—") + (s.goldEstimated ? "（估）" : "") + "</span>"
+      : '<span class="k">状态</span><span class="v">进入对局后自动解析</span>';
+
+    /* 段位（三态：未连接 / 解析中 / 失败） */
+    const rk = s.rank;
+    const rkSt = s.rankStatus || lcu || {};
+    $("rankPill").className = "pill " + (rkKind === "ok" ? "pill-green" : rkKind === "failed" ? "pill-red" : "pill-amber");
+    $("rankPill").textContent = { ok: "已解析", unconnected: "未连接", resolving: "解析中", failed: "失败" }[rkKind] || rkKind;
+    if (rkKind === "ok" && rk) {
+      $("rankKv").innerHTML =
+        '<span class="k">我方均值</span><span class="v">' + UI.fmtInt(rk.team) + "</span>" +
+        '<span class="k">敌方均值</span><span class="v">' + UI.fmtInt(rk.enemy) + "</span>" +
+        '<span class="k">差值</span><span class="v ' + (rk.diff > 0 ? "pos" : rk.diff < 0 ? "neg" : "zero") + '">' + UI.signed(rk.diff) + "</span>" +
+        '<span class="k">自己</span><span class="v">' + UI.fmtInt(rk.own) + "</span>";
+    } else {
+      $("rankKv").innerHTML = rankStateHtml(rkKind, rkSt);
+    }
+
+    /* 团队差（精简 8 项） */
+    const d = s.teamDiff || {};
+    const chip = (label, v, invert) => {
+      const good = invert ? v < 0 : v > 0;
+      const bad = invert ? v > 0 : v < 0;
+      const cls = good ? "pos" : bad ? "neg" : "zero";
+      return '<div class="dg"><span class="k">' + label + '</span><span class="v ' + cls + '">' + UI.signed(v) + "</span></div>";
+    };
+    $("diffGrid").innerHTML =
+      chip("击杀", d.kills) + chip("补刀", d.cs) +
+      chip("等级和", d.level) + chip("小龙", d.dragons) +
+      chip("大龙", d.barons) + chip("巢虫", d.grubs) +
+      chip("先锋", d.heralds) + chip("塔", d.towers);
+
+    /* 建议 */
+    const advice = s.advice || [];
+    $("advice").innerHTML = advice.slice(0, 3).map((a) =>
+      '<div class="advice-item ' + (a.source === "llm" ? "llm" : "rule") + '">' +
+      '<span class="src">' + (a.source === "llm" ? "LLM" : "规则") + "</span>" +
+      "<span>" + UI.esc(a.text) + "</span></div>"
+    ).join("") || '<div class="faint" style="font-size:12.5px">' + (s.ok ? "暂无建议" : "进入对局后自动给出建议") + "</div>";
+
+    /* 事件流 */
+    const feed = s.feed || [];
+    $("feed").innerHTML = feed.slice().reverse().slice(0, 4).map((ev) =>
+      '<li class="feed-item ' + (ev.side || "none") + '">' +
+      '<span class="feed-time">' + UI.mmss(ev.t) + '</span><span class="feed-dot"></span>' +
+      '<span class="txt">' + UI.esc(ev.text) + "</span></li>"
+    ).join("") || '<li class="feed-item"><span class="txt faint">暂无事件</span></li>';
+
+    /* 设置与自检 */
+    const st = home.settings || {};
+    $("settingInterval").textContent = (st.interval != null ? st.interval : 5) + " 秒";
+    document.querySelectorAll("#viewMain .switch").forEach((sw) => {
+      sw.setAttribute("aria-checked", !!st[sw.dataset.key] ? "true" : "false");
+    });
+    const self = home.selftest || {};
+    $("selftestAt").textContent = self.at ? "· " + self.at : "";
+    $("selfPill").className = "pill " + (self.passed ? "pill-green" : "pill-red");
+    $("selfPill").textContent = self.passed ? "自检通过" : "自检未通过";
+    $("selftestLine").textContent = (self.lines || []).join(" · ") || "尚未运行自检";
+  }
+
+  /* ---------------------------------------------------------- 三态视图 */
+  function showView(name) {
+    $("viewStatus").classList.toggle("hidden", name !== "status");
+    $("viewMain").classList.toggle("hidden", name !== "main");
+  }
+
+  function showLoading() {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="card entrance" style="--i:0"><div class="skeleton sk-hero" style="height:170px"></div></div>' +
+      '<div class="grid grid-3" style="margin-top:14px">' +
+      [1, 2, 3].map((i) => '<div class="card entrance" style="--i:' + i + '"><div class="skeleton sk-line" style="width:96px;margin-bottom:12px"></div>' +
+        [1, 2, 3].map(() => '<div class="skeleton sk-line" style="margin:10px 0"></div>').join("") + "</div>").join("") +
+      "</div>";
+  }
+
+  function showEmpty(info) {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="empty entrance" style="--i:0">' +
+      '<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>' +
+      '<div class="empty-title">' + UI.esc((info && info.message) || "等待对局…") + "</div>" +
+      '<div class="empty-hint">打开游戏后自动连接（Live Client Data 2999）。期间可以正常使用选人助手与 Web 仪表盘。</div>' +
+      '<div class="empty-actions">' +
+      '<button type="button" class="btn btn-primary btn-sm" id="btnDraftE">打开选人助手</button>' +
+      '<button type="button" class="btn btn-secondary btn-sm" id="btnDashE">打开 Web 仪表盘</button>' +
+      "</div></div>";
+    $("btnDraftE").addEventListener("click", () => openDraft());
+    $("btnDashE").addEventListener("click", () => openDashboard());
+  }
+
+  function showError(info) {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="stack stack-12" style="max-width:640px;margin:0 auto;padding-top:16px">' +
+      '<div class="alert entrance" style="--i:0">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4 3 19h18L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="16.8" r=".5" fill="currentColor"/></svg>' +
+      '<div class="grow">' + UI.esc((info && info.message) || "内部服务异常") +
+      (info && info.detail ? '<div class="faint" style="font-size:12px;margin-top:2px">' + UI.esc(info.detail) + "</div>" : "") + "</div>" +
+      '<button type="button" class="btn btn-sm btn-secondary" id="btnRetry">重试</button>' +
+      "</div>" +
+      '<div class="empty entrance" style="--i:1">' +
+      '<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg></div>' +
+      '<div class="empty-title">采集服务异常</div>' +
+      '<div class="empty-hint">页面会持续自动重连；也可以点击「运行自检」定位问题。</div>' +
+      '<div class="empty-actions">' +
+      '<button type="button" class="btn btn-primary btn-sm" id="btnSelfE">运行自检</button>' +
+      "</div></div></div>";
+    $("btnRetry").addEventListener("click", () => (IS_DEMO ? resumeDemo() : reconnect()));
+    $("btnSelfE").addEventListener("click", () => callBridge("runSelftest", "演示模式：接入桌面版后将运行自检"));
+  }
+
+  /* ---------------------------------------------------------- 数据源 */
+  let currentHome = null;
+  function handleHome(home) {
+    if (!home) return;
+    currentHome = home;
+    if (home.ok === false || home.error) showError(home);
+    else render(home);
+  }
+
+  let failCount = 0;
+  async function poll() {
+    if (typeof bridge.getHome === "function") {
+      try { handleHome(await bridge.getHome()); return; } catch (e) {}
+    }
+    try {
+      const res = await fetch("/api/home", { cache: "no-store" });
+      if (res.ok) { failCount = 0; handleHome(await res.json()); }
+      else { failCount++; if (failCount >= 3) showError({ error: true, message: "内部服务返回异常（" + res.status + "）" }); }
+    } catch (e) {
+      failCount++;
+      if (failCount >= 3) showError({ error: true, message: "内部服务未响应", detail: "请重启 LoLAdvisor，或使用 --diag 生成诊断报告。" });
+    }
+  }
+
+  function reconnect() {
+    failCount = 0;
+    showLoading();
+    poll();
+  }
+
+  /* ---------------------------------------------------------- 演示模式 */
+  const RANK = params.get("rank");
+  function resumeDemo() {
+    const h = DEMO.home.default();
+    if (RANK && DEMO.rankStates[RANK]) h.state = DEMO.applyRankState(h.state, RANK);
+    handleHome(h);
+  }
+
+  /* ---------------------------------------------------------- 启动 */
+  /* 静态按钮与开关：只绑定一次（render 每轮刷新只更新状态值） */
+  $("btnDraft").addEventListener("click", () => openDraft(currentHome && currentHome.draft && currentHome.draft.url));
+  $("btnDash").addEventListener("click", () => openDashboard(currentHome && currentHome.dashboard && currentHome.dashboard.url));
+  $("btnSelftest").addEventListener("click", () => callBridge("runSelftest", "演示模式：接入桌面版后将运行自检并刷新结果"));
+  $("btnDiag").addEventListener("click", () => callBridge("openDiag", "演示模式：接入桌面版后将打开 diag.log 诊断报告"));
+  document.querySelectorAll("#viewMain .switch").forEach((sw) => {
+    sw.addEventListener("click", () => {
+      const on = sw.getAttribute("aria-checked") !== "true";
+      sw.setAttribute("aria-checked", on ? "true" : "false");
+      if (typeof bridge.setSetting === "function") { try { bridge.setSetting(sw.dataset.key, on); } catch (e) {} }
+      if (IS_DEMO) UI.toast("演示模式：接入桌面版后将应用此设置");
+    });
+  });
+
+  if (IS_DEMO) {
+    const initial = params.get("state") || "default";
+    UI.attachDemoPanel({
+      default: resumeDemo,
+      loading: showLoading,
+      empty: () => showEmpty({ message: "等待对局…" }),
+      error: () => showError(DEMO.home.error()),
+    }, "主窗口");
+    if (initial === "loading") showLoading();
+    else if (initial === "empty") showEmpty({ message: "等待对局…" });
+    else if (initial === "error") showError(DEMO.home.error());
+    else resumeDemo();
+  } else {
+    showLoading();
+    poll();
+    setInterval(poll, 2000);
+  }
+})();
+</script>
+</body>
+</html>

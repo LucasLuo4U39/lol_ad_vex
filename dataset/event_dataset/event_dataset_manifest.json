@@ -1,0 +1,28 @@
+{
+  "games": 2298,
+  "rows": 326054,
+  "intervalSeconds": 10,
+  "labels": {
+    "kill_30s": {
+      "positive": 170391,
+      "rate": 0.522585215945825
+    },
+    "blue_kill_30s": {
+      "positive": 111991,
+      "rate": 0.34347378041674076
+    },
+    "red_kill_30s": {
+      "positive": 113605,
+      "rate": 0.3484238807068768
+    },
+    "blue_gank_60s": {
+      "positive": 103044,
+      "rate": 0.3160335404564888
+    },
+    "red_gank_60s": {
+      "positive": 104766,
+      "rate": 0.3213148742232882
+    }
+  },
+  "skipped": []
+}

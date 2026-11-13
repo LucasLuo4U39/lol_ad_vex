@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>选人助手</title>
+<style>
+:root{
+  --bg:#090c11; --panel:#10151d; --panel2:#141b25; --line:#1c2531;
+  --text:#e7ecf3; --muted:#8792a3; --dim:#5a6474;
+  --gold:#d8a850; --blue:#5b9bd5; --red:#d96a63; --green:#58c98c;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:14px/1.5 "Inter","Microsoft YaHei UI","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+.app{height:100%; display:grid; grid-template-rows:auto auto 1fr auto;}
+
+/* ---------------- header ---------------- */
+header{
+  display:grid; grid-template-columns:260px 1fr 260px; align-items:center;
+  gap:16px; padding:14px 24px; border-bottom:1px solid var(--line);
+}
+.brand{display:flex; align-items:baseline; gap:10px}
+.brand .dot{color:var(--gold); font-size:12px}
+.brand h1{font-size:16px; font-weight:600; margin:0; letter-spacing:.5px}
+.brand span{font-size:10px; color:var(--dim); letter-spacing:1.2px}
+.match{display:flex; align-items:center; justify-content:center; gap:18px}
+.side{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted)}
+.side b{color:var(--text); font-weight:600}
+.side .tag{width:8px; height:8px; border-radius:2px}
+.side.blue .tag{background:var(--blue)}
+.side.red .tag{background:var(--red)}
+.odds{flex:1; max-width:520px; display:flex; flex-direction:column; gap:6px}
+.odds .nums{display:flex; justify-content:space-between; font-variant-numeric:tabular-nums}
+.odds .nums b{font-size:22px; font-weight:650; letter-spacing:-.5px}
+.odds .nums .left{color:var(--blue)} .odds .nums .right{color:var(--red)}
+.odds .bar{height:8px; border-radius:6px; background:var(--red); overflow:hidden; display:flex}
+.odds .bar i{display:block; height:100%; background:var(--blue); border-radius:6px 0 0 6px; transition:width .35s ease}
+.meta{display:flex; justify-content:flex-end; align-items:center; gap:8px}
+.pill{padding:4px 10px; border:1px solid var(--line); border-radius:999px; font-size:11px; color:var(--muted)}
+.pill b{color:var(--text); font-variant-numeric:tabular-nums}
+.pill.gold{color:var(--gold); border-color:rgba(216,168,80,.35)}
+
+/* ---------------- bans ---------------- */
+.bans{
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px;
+  padding:8px 24px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.008);
+}
+.banrow{display:flex; align-items:center; gap:6px}
+.banrow.right{justify-content:flex-end}
+.banlabel{font-size:10px; color:var(--dim); letter-spacing:1.4px}
+.ban{width:30px; height:30px; border-radius:7px; background:var(--panel2); border:1px solid var(--line); overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--dim)}
+.ban span{position:relative}
+.ban img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:grayscale(.35) brightness(.85)}
+.ban.empty{opacity:.35}
+.vs{font-size:10px; color:var(--dim); letter-spacing:2px}
+
+/* ---------------- draft board ---------------- */
+.boardwrap{padding:8px 24px; min-height:0; display:flex; flex-direction:column}
+.board{display:flex; flex-direction:column; gap:6px; min-height:0; overflow:auto; flex:1 1 auto}
+.boardhead{display:grid; grid-template-columns:1fr 84px 1fr; align-items:center; padding:0 12px 2px; font-size:10px; letter-spacing:1.6px}
+.teamlabel{color:var(--dim)}
+.teamlabel.blue{color:var(--blue)}
+.teamlabel.red{color:var(--red); text-align:right}
+.rolehead{text-align:center; color:var(--dim)}
+.row{
+  display:grid; grid-template-columns:1fr 84px 1fr; align-items:center; gap:14px;
+  padding:8px 12px; border-radius:12px; border:1px solid transparent; min-height:64px;
+  flex:1 1 0;
+}
+.row.me{background:transparent; border-color:transparent}
+.slot{display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:12px; min-width:0}
+.slot.right{grid-template-columns:minmax(0,1fr) auto}
+.slot .who{min-width:0; overflow:hidden}
+.slot.right{text-align:right}
+.slot.me-card{border:1px solid rgba(216,168,80,.45); background:rgba(216,168,80,.05); border-radius:12px; padding:6px 10px; justify-self:start; width:max-content; max-width:100%}
+.slot.right.me-card{justify-self:end}
+.me-tag{font-size:9px; color:var(--gold); border:1px solid rgba(216,168,80,.4); border-radius:999px; padding:0 5px; flex:0 0 auto}
+.topline{display:flex; align-items:baseline; gap:8px; min-width:0; white-space:nowrap; overflow:hidden}
+.topline .role{font-size:10px; color:var(--dim); letter-spacing:1.2px; flex:0 0 auto}
+.topline .summoner{font-size:10px; color:var(--dim); overflow:hidden; text-overflow:ellipsis}
+.slot.right .topline{justify-content:flex-end}
+.portrait{
+  width:64px; height:64px; border-radius:14px; background:var(--panel2);
+  border:1px solid var(--line); flex:0 0 auto; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; color:var(--dim);
+}
+.portrait img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.portrait span{position:relative}
+.portrait.letter{display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; color:var(--dim)}
+.portrait.pending{opacity:.45; border-style:dashed}
+.who{min-width:0}
+.who .role{font-size:10px; color:var(--dim); letter-spacing:1.4px; text-transform:uppercase}
+.who .champ{font-size:18px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.who .champ--empty{color:var(--dim); font-weight:400; font-size:14px}
+.who .rank{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums}
+.slot.right .who{display:flex; flex-direction:column; align-items:flex-end}
+.slot .champ{max-width:100%}
+.vsbox{display:flex; align-items:center; justify-content:center}
+.vsbox span{width:1px; height:58px; background:var(--line)}
+
+/* ---------------- bottom ---------------- */
+.bottom{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,620px); gap:16px; padding:8px 24px 18px; min-height:0}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; min-height:0}
+.card h2{margin:0 0 8px; font-size:11px; font-weight:600; color:var(--muted); letter-spacing:1.4px; text-transform:uppercase; display:flex; align-items:center; gap:8px}
+.card h2 small{font-weight:400; color:var(--dim); letter-spacing:0; text-transform:none}
+.curvewrap{position:relative}
+.curve{width:100%; height:104px; display:block}
+.curve .area{fill:url(#grad); opacity:.10}
+.curve .line{fill:none; stroke:var(--gold); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round}
+.curve .dot{fill:var(--gold); opacity:.5}
+.curve .last{fill:var(--gold); stroke:var(--bg); stroke-width:1.5}
+.curvey{position:absolute; right:2px; top:2px; bottom:2px; display:flex; flex-direction:column; justify-content:space-between; font-size:10px; color:var(--dim); pointer-events:none}
+.curvefoot{display:flex; justify-content:space-between; font-size:10px; color:var(--dim); margin-top:2px}
+
+.cands{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px}
+.cand{
+  display:grid; grid-template-columns:18px 40px 1fr auto; align-items:center; gap:9px;
+  padding:7px 8px; border-radius:10px; border:1px solid transparent;
+}
+.cand:hover{background:var(--panel2)}
+.cand.top{border-color:rgba(216,168,80,.28); background:rgba(216,168,80,.05)}
+.cand .idx{font-size:10px; color:var(--dim); text-align:center}
+.cand .pimg{width:40px; height:40px; border-radius:9px; background:var(--panel2); border:1px solid var(--line); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--dim)}
+.cand .pimg img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.cand .pimg.letter{display:flex; align-items:center; justify-content:center; color:var(--dim); font-weight:600}
+.cand .info{min-width:0}
+.cand .info .n{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.cand .info .r{font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.cand .num{text-align:right; font-variant-numeric:tabular-nums}
+.cand .num b{font-size:13px}
+.cand .num span{display:block; font-size:10px; color:var(--dim)}
+.up{color:var(--green)} .down{color:var(--red)}
+
+/* ---------------- waiting ---------------- */
+.empty{flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; color:var(--dim)}
+.empty .big{font-size:15px; color:var(--muted); letter-spacing:.6px}
+.empty .slots{display:flex; gap:10px}
+.empty .slots div{width:64px; height:64px; border-radius:14px; border:1px dashed var(--line); display:flex; align-items:center; justify-content:center; font-size:11px}
+.hidden{display:none !important}
+.errbox{position:fixed; left:16px; bottom:16px; padding:8px 12px; background:rgba(217,106,99,.12); border:1px solid var(--red); border-radius:10px; color:var(--red); font-size:12px; z-index:99; max-width:80%}
+
+@media (max-width:1100px){
+  body{overflow:auto}
+  .app{height:auto}
+  header{grid-template-columns:1fr; gap:10px}
+  .bottom{grid-template-columns:1fr}
+  .cands{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="brand">
+      <span class="dot">◆</span>
+      <h1>选人助手</h1>
+      <span>DRAFT</span>
+    </div>
+
+    <div class="match">
+      <div class="side blue"><span class="tag"></span><b>我方</b></div>
+      <div class="odds">
+        <div class="nums">
+          <b class="left" id="pBlue">--</b>
+          <b class="right" id="pRed">--</b>
+        </div>
+        <div class="bar"><i id="pBar" style="width:50%"></i></div>
+      </div>
+      <div class="side red"><b>敌方</b><span class="tag"></span></div>
+    </div>
+
+    <div class="meta">
+      <span class="pill" id="updPill" title="页面最近一次收到数据的时间">更新 —</span>
+      <span class="pill" id="phasePill">等待选人</span>
+      <span class="pill" id="clockPill">--</span>
+      <span class="pill gold" id="rolePill">位置 —</span>
+    </div>
+  </header>
+
+  <section class="bans" id="bans">
+    <div class="banrow" id="banBlue"></div>
+    <div class="vs">BANS</div>
+    <div class="banrow right" id="banRed"></div>
+  </section>
+
+  <div class="boardwrap">
+    <div class="boardhead" id="boardhead">
+      <div class="teamlabel blue">我方</div>
+      <div class="rolehead">位置</div>
+      <div class="teamlabel red">敌方</div>
+    </div>
+    <section class="board" id="board"></section>
+    <div class="empty" id="empty">
+      <div class="big" id="emptyMsg">等待进入选人阶段…</div>
+      <div class="slots">
+        <div>上单</div><div>打野</div><div>中单</div><div>下路</div><div>辅助</div>
+      </div>
+      <div style="font-size:11px" id="emptyStatus">进入 BP 后自动刷新</div>
+      <div style="font-size:11px; color:#4a5563">提示：点击页面任意位置一次，切到游戏后页面也不会被浏览器休眠</div>
+    </div>
+  </div>
+
+  <section class="bottom hidden" id="bottom">
+    <div class="card">
+      <h2>胜率曲线 <small id="curveNote">每次选人更新</small></h2>
+      <div class="curvewrap">
+        <svg class="curve" id="curve" viewBox="0 0 600 104" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d8a850" stop-opacity=".7"/>
+              <stop offset="100%" stop-color="#d8a850" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g id="dots"></g>
+          <path class="area" id="area" d=""></path>
+          <path class="line" id="line" d=""></path>
+          <circle class="last" id="last" r="3" cx="-10" cy="-10"></circle>
+        </svg>
+        <div class="curvey"><span id="curveMax"></span><span id="curveMin"></span></div>
+      </div>
+      <div class="curvefoot"><span>BP 开始</span><span id="factorsLine">—</span><span>现在</span></div>
+    </div>
+
+    <div class="card" style="display:flex; flex-direction:column; min-height:0">
+      <h2>推荐英雄 <small id="candRole"></small></h2>
+      <div class="cands" id="cands"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const ROLE_ORDER = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
+const ROLE_CN = {TOP: "上单", JUNGLE: "打野", MIDDLE: "中单", BOTTOM: "下路", UTILITY: "辅助"};
+
+function pct(v, d = 1) { return (v === null || v === undefined || isNaN(v)) ? "—" : (v * 100).toFixed(d) + "%"; }
+function initial(name) { return (name || "?").trim().slice(0, 1); }
+
+function portrait(champ, champId, extra = "") {
+  const letter = initial(champ);
+  if (champ && champId) {
+    return `<div class="portrait ${extra}"><span>${letter}</span><img src="/icon/${champId}.png" alt="${champ}" onerror="this.remove()"></div>`;
+  }
+  return `<div class="portrait letter ${extra}">${champ ? letter : "·"}</div>`;
+}
+
+function slot(row, side) {
+  const right = side === "right";
+  const r = row || {role: "", champ: "", champId: 0, locked: false};
+  const cls = r.champ ? "" : "champ--empty";
+  const name = r.champ || "未选择";
+  const rank = r.rank ? Math.round(r.rank) : "";
+  const inner = `
+    <div class="who">
+      <div class="topline"><span class="role">${ROLE_CN[r.role] || r.roleCn || "未分配"}</span><span class="summoner">${r.name || ""}</span>${r.isMe ? '<span class="me-tag">我</span>' : ""}</div>
+      <div class="champ ${cls}">${name}</div>
+      <div class="rank">${rank}</div>
+    </div>`;
+  const pic = portrait(r.champ, r.champId, r.locked ? "" : "pending");
+  const meCls = r.isMe ? " me-card" : "";
+  return right
+    ? `<div class="slot right${meCls}">${inner}${pic}</div>`
+    : `<div class="slot${meCls}">${pic}${inner}</div>`;
+}
+
+function renderBoard(state) {
+  // 每个玩家一行，双方按顺序配对：自定义带 bots 时可能出现重复位置
+  // （比如两个 MIDDLE），按角色查表会把“我”覆盖掉，所以改成逐人渲染。
+  const roleIdx = (r) => {
+    const i = ROLE_ORDER.indexOf(r.role);
+    return i === -1 ? 99 : i;
+  };
+  const sortTeam = (rows) => (rows || []).slice().sort((a, b) => roleIdx(a) - roleIdx(b));
+  const myRows = sortTeam(state.myTeam);
+  const theirRows = sortTeam(state.theirTeam);
+  const n = Math.max(myRows.length, theirRows.length, 5);
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const me = myRows[i];
+    const en = theirRows[i];
+    const isMe = !!(me && me.isMe);
+    rows.push(`
+      <div class="row ${isMe ? "me" : ""}">
+        ${slot(me, "left")}
+        <div class="vsbox"><span></span></div>
+        ${slot(en, "right")}
+      </div>`);
+  }
+  $("board").innerHTML = rows.join("");
+}
+
+function renderBans(bans) {
+  const mine = bans.mine || [], theirs = bans.theirs || [];
+  const tile = (b) => {
+    if (!b || !b.name) return `<div class="ban empty"></div>`;
+    const img = b.id ? `<img src="/icon/${b.id}.png" alt="${b.name}" onerror="this.remove()">` : "";
+    return `<div class="ban" title="${b.name}">${img}<span>${initial(b.name)}</span></div>`;
+  };
+  const row = (arr, right) => {
+    const items = arr.slice(0, 5).map(tile);
+    while (items.length < 5) items.push(`<div class="ban empty"></div>`);
+    return (right ? "" : `<span class="banlabel">我方 BAN</span>`) + items.join("") + (right ? `<span class="banlabel">敌方 BAN</span>` : "");
+  };
+  $("banBlue").innerHTML = row(mine, false);
+  $("banRed").innerHTML = row(theirs, true);
+}
+
+function drawCurve(history) {
+  const W = 600, H = 104, P = 6;
+  let pts = (history || []).map(h => h.p);
+  if (!pts.length) { $("line").setAttribute("d", ""); $("area").setAttribute("d", ""); return; }
+  if (pts.length === 1) pts = [pts[0], pts[0]];
+  const lo = Math.min(...pts), hi = Math.max(...pts);
+  const span = Math.max(0.02, hi - lo);
+  const yLo = lo - span * 0.35, yHi = hi + span * 0.25;
+  const n = pts.length;
+  const xs = (i) => P + (i / (n - 1)) * (W - 2 * P);
+  const ys = (p) => H - P - ((p - yLo) / (yHi - yLo)) * (H - 2 * P);
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${xs(i).toFixed(1)},${ys(p).toFixed(1)}`).join(" ");
+  $("line").setAttribute("d", line);
+  $("area").setAttribute("d", `${line} L${xs(n - 1).toFixed(1)},${H - P} L${xs(0).toFixed(1)},${H - P} Z`);
+  $("dots").innerHTML = pts.slice(0, -1).map((p, i) =>
+    `<circle class="dot" r="2.2" cx="${xs(i).toFixed(1)}" cy="${ys(p).toFixed(1)}"/>`).join("");
+  $("last").setAttribute("cx", xs(n - 1));
+  $("last").setAttribute("cy", ys(pts[n - 1]));
+  $("curveMax").textContent = (hi * 100).toFixed(1) + "%";
+  $("curveMin").textContent = (lo * 100).toFixed(1) + "%";
+}
+
+function renderCands(state) {
+  if (state.frozen) {
+    $("candRole").textContent = "";
+    $("cands").innerHTML = `<div style="color:var(--dim);font-size:12px">对局进行中，推荐已暂停</div>`;
+    return;
+  }
+  const p = state.winProb;
+  $("candRole").textContent = state.myRoleCn ? `· ${state.myRoleCn}` : "";
+  const list = state.candidates || [];
+  $("cands").innerHTML = list.map((c, i) => {
+    const d = (c.prob - p) * 100;
+    return `
+      <div class="cand ${i === 0 ? "top" : ""}">
+        <div class="idx">${i + 1}</div>
+        <div class="pimg"><span>${initial(c.champ)}</span>${c.champId ? `<img src="/icon/${c.champId}.png" alt="${c.champ}" onerror="this.remove()">` : ""}</div>
+        <div class="info">
+          <div class="n">${c.champ}</div>
+          <div class="r">${c.reason || ""}</div>
+        </div>
+        <div class="num">
+          <b class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "+" : ""}${d.toFixed(1)}</b>
+          <span>${pct(c.prob)}</span>
+        </div>
+      </div>`;
+  }).join("") || `<div style="color:var(--dim);font-size:12px">${state.myRole ? "暂无推荐" : "位置未分配，先在客户端选择/分配到位置后再看推荐"}</div>`;
+}
+
+function toggleHidden(id, hide) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle("hidden", hide);
+}
+
+function step(fn, name) {
+  try {
+    fn();
+  } catch (e) {
+    throw new Error(name + ": " + (e && e.message ? e.message : e));
+  }
+}
+
+function render(state) {
+  if (!state.ok) {
+    toggleHidden("empty", false);
+    toggleHidden("bans", true);
+    toggleHidden("boardhead", true);
+    toggleHidden("bottom", true);
+    const board = document.getElementById("board");
+    if (board) board.innerHTML = "";
+    $("pBlue").textContent = "--"; $("pRed").textContent = "--";
+    $("pBar").style.width = "50%";
+    $("phasePill").textContent = "等待选人";
+    $("clockPill").textContent = "--";
+    $("rolePill").textContent = "位置 —";
+    $("emptyMsg").textContent = state.message || "等待进入选人阶段…";
+    const lcu = state.lcu || {};
+    $("emptyStatus").textContent = lcu.connected
+      ? `LCU 已连接（端口 ${lcu.port}）· 进入 BP 后自动刷新`
+      : "LCU 未连接：请确认客户端已启动并登录";
+    return;
+  }
+  toggleHidden("empty", true);
+  const bans = state.bans || {};
+  const hasBans = ((bans.mine || []).length + (bans.theirs || []).length) > 0;
+  toggleHidden("bans", !hasBans);
+  toggleHidden("boardhead", false);
+  toggleHidden("bottom", false);
+
+  const phaseMap = {BAN_PICK: "选人阶段", PLANNING: "预选阶段", FINALIZATION: "确认阶段", GAME_STARTING: "即将开始",
+    IN_GAME: "对局进行中", END_OF_GAME: "结算中", LAST_DRAFT: "最后阵容"};
+  if (state.frozen) {
+    $("phasePill").textContent = phaseMap[state.phase] || "对局中";
+    $("clockPill").textContent = "—";
+    $("curveNote").textContent = "开局前最后阵容 · 敌方由实时接口补全";
+  } else {
+    $("phasePill").textContent = phaseMap[state.phase] || state.phase || "选人阶段";
+    $("clockPill").textContent = state.left > 0 ? `${Math.ceil(state.left)}s` : "--";
+    $("curveNote").textContent = "每次选人更新";
+  }
+  $("rolePill").textContent = "位置 " + (state.myRoleCn || "—");
+
+  const p = state.winProb;
+  $("pBlue").textContent = pct(p);
+  $("pRed").textContent = pct(1 - p);
+  $("pBar").style.width = (p * 100).toFixed(1) + "%";
+
+  step(() => renderBans(state.bans || {}), "renderBans");
+  step(() => renderBoard(state), "renderBoard");
+  step(() => drawCurve(state.history || []), "drawCurve");
+  step(() => renderCands(state), "renderCands");
+
+  step(() => {
+    const f = state.factors || {};
+    const bits = [];
+    if (f.myRank && f.theirRank) bits.push(`段位 ${Math.round(f.myRank)} : ${Math.round(f.theirRank)}`);
+    if (f.champEdge !== null && f.champEdge !== undefined) bits.push(`版本 ${f.champEdge >= 0 ? "+" : ""}${f.champEdge.toFixed(1)}pp`);
+    if (f.laneEdge !== null && f.laneEdge !== undefined) bits.push(`对位 ${f.laneEdge >= 0 ? "+" : ""}${f.laneEdge.toFixed(1)}pp`);
+    $("factorsLine").textContent = bits.join(" · ") || `AUC ${state.modelAuc ?? "—"}`;
+  }, "factors");
+}
+
+function showErr(e) {
+  const box = document.getElementById("errbox");
+  const msg = e && e.message ? e.message : String(e);
+  if (box) {
+    box.textContent = "渲染异常：" + msg;
+    box.classList.remove("hidden");
+    clearTimeout(window.__errT);
+    window.__errT = setTimeout(() => box.classList.add("hidden"), 10000);
+  }
+  const last = document.getElementById("lastErr");
+  if (last) last.textContent = msg;
+}
+
+function handleState(state) {
+  if (!state) return;
+  // 页面脚本和服务端 HTML 版本不一致时自动刷新，避免旧脚本卡死
+  if (state.v && window.__htmlv && state.v !== window.__htmlv) {
+    location.reload();
+    return;
+  }
+  if (state.v) window.__htmlv = state.v;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  const via = window.__sseAlive ? "" : " · 轮询";
+  const upd = document.getElementById("updPill");
+  if (upd) upd.textContent = `更新 ${hh}:${mm}:${ss}${via}`;
+  try {
+    render(state);
+  } catch (e) {
+    showErr(e);
+  }
+}
+
+async function pollOnce() {
+  try {
+    const res = await fetch("/api/state", {cache: "no-store"});
+    handleState(await res.json());
+  } catch (e) { /* 网络抖动，下轮再试 */ }
+}
+
+function connectSse() {
+  if (window.__es) {
+    try { window.__es.close(); } catch (e) {}
+  }
+  try {
+    const es = new EventSource("/api/events");
+    window.__es = es;
+    es.onmessage = (e) => {
+      try { handleState(JSON.parse(e.data)); } catch (err) {}
+    };
+    es.onopen = () => { window.__sseAlive = true; };
+    es.onerror = () => {
+      window.__sseAlive = false;
+      try { es.close(); } catch (e) {}
+      setTimeout(connectSse, 2000);
+    };
+  } catch (e) {
+    setTimeout(connectSse, 2000);
+  }
+}
+
+// 静音音频保持标签页不被浏览器休眠/节流（进游戏后页面在后台也能实时刷新）
+function startHum() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx || window.__hum) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0.0001; // 听不见
+    osc.frequency.value = 220;
+    osc.type = "sine";
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    window.__hum = {ctx, osc};
+  } catch (e) {}
+}
+window.addEventListener("pointerdown", startHum, {once: true});
+
+connectSse();
+pollOnce();
+setInterval(pollOnce, 4000); // SSE 兜底轮询
+</script>
+<div id="errbox" class="errbox hidden"></div>
+<div id="lastErr" style="display:none"></div>
+</body>
+</html>

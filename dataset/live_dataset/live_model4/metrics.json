@@ -1,0 +1,113 @@
+{
+  "dataset": "../live_dataset_v4.csv",
+  "rows": 579790,
+  "games": 2298,
+  "features": 56,
+  "featureColumns": [
+    "minute",
+    "role",
+    "ownLevel",
+    "ownGold",
+    "ownCS",
+    "ownKills",
+    "ownDeaths",
+    "ownAssists",
+    "teamKills",
+    "teamDeaths",
+    "teamAssists",
+    "teamCS",
+    "teamLevelSum",
+    "enemyKills",
+    "enemyDeaths",
+    "enemyAssists",
+    "enemyCS",
+    "enemyLevelSum",
+    "killDiff",
+    "deathDiff",
+    "assistDiff",
+    "csDiff",
+    "levelSumDiff",
+    "dragonDiff",
+    "baronDiff",
+    "heraldDiff",
+    "grubDiff",
+    "atakhanDiff",
+    "towerDiff",
+    "inhibitorDiff",
+    "since_kill",
+    "since_own_kill",
+    "since_enemy_kill",
+    "since_gank",
+    "since_own_gank",
+    "since_enemy_gank",
+    "since_dragon",
+    "since_baron",
+    "since_tower",
+    "kills_last_60",
+    "kills_last_180",
+    "own_kills_last_180",
+    "enemy_kills_last_180",
+    "ganks_last_300",
+    "own_ganks_last_300",
+    "enemy_ganks_last_300",
+    "own_champ_wr",
+    "enemy_champ_wr",
+    "matchup_wr",
+    "matchup_games_log",
+    "team_wr_diff",
+    "ownElo",
+    "teamElo",
+    "enemyElo",
+    "eloDiff",
+    "ownEloVsTeam"
+  ],
+  "categoricalColumns": [
+    "role"
+  ],
+  "overall": {
+    "auc": 0.8256970990966048,
+    "logLoss": 0.5067744478595068,
+    "brier": 0.17019011566954864,
+    "accuracy": 0.7367822832404837,
+    "rows": 579790,
+    "baselineBrier": 0.25
+  },
+  "foldMetrics": [
+    {
+      "auc": 0.8317739164031949,
+      "logLoss": 0.49832816607460867,
+      "brier": 0.16723174296023838,
+      "accuracy": 0.7409059534081104,
+      "fold": 1
+    },
+    {
+      "auc": 0.8383389923627298,
+      "logLoss": 0.4931890026842761,
+      "brier": 0.16458635424056733,
+      "accuracy": 0.7472389991371873,
+      "fold": 2
+    },
+    {
+      "auc": 0.8241022844827586,
+      "logLoss": 0.5081080940649779,
+      "brier": 0.17108563607589206,
+      "accuracy": 0.7368793103448276,
+      "fold": 3
+    },
+    {
+      "auc": 0.8010184973246135,
+      "logLoss": 0.537926371144473,
+      "brier": 0.18184997188608015,
+      "accuracy": 0.7178879310344828,
+      "fold": 4
+    },
+    {
+      "auc": 0.8337098821013292,
+      "logLoss": 0.4963007095526542,
+      "brier": 0.16618914712376467,
+      "accuracy": 0.7410121562203639,
+      "fold": 5
+    }
+  ],
+  "finalEstimators": 101
+}

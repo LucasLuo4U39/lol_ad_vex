@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoL 实时助手</title>
+<style>
+:root {
+  --bg: #0b1220; --panel: #131c2e; --panel2: #1a2640; --line: #26334f;
+  --text: #e6edf7; --dim: #8fa3c0; --gold: #c8aa6e; --green: #4ade80; --red: #f87171;
+  --blue: #60a5fa; --accent: #f0b541;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  padding: 16px; min-height: 100vh;
+}
+header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+h1 { font-size: 20px; letter-spacing: 1px; }
+h1 .dot { color: var(--accent); }
+#clock { font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; color: var(--gold); }
+#status { font-size: 13px; color: var(--dim); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.card h2 { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.winwrap { display: flex; align-items: center; gap: 14px; }
+#winProb { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 130px; }
+.bar { flex: 1; }
+.bar .track { height: 10px; background: var(--panel2); border-radius: 5px; overflow: hidden; }
+.bar .fill { height: 100%; width: 50%; border-radius: 5px; transition: width .6s; }
+.bar .scale { display: flex; justify-content: space-between; color: var(--dim); font-size: 10px; margin-top: 3px; }
+.spark { width: 100%; height: 56px; margin-top: 10px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: 14px; }
+.kv .k { color: var(--dim); }
+.kv .v { text-align: right; font-variant-numeric: tabular-nums; }
+.diff { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 13px; }
+.diff .k { color: var(--dim); }
+.diff .v { text-align: right; font-variant-numeric: tabular-nums; }
+.pos { color: var(--green); } .neg { color: var(--red); } .zero { color: var(--dim); }
+.probrow { margin-bottom: 9px; }
+.probrow .label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+.probrow .track { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
+.probrow .fill { height: 100%; border-radius: 4px; transition: width .6s; }
+.fill.own { background: var(--green); } .fill.enemy { background: var(--red); }
+#advice { list-style: none; }
+#advice li { padding: 7px 10px; margin-bottom: 6px; border-radius: 6px; font-size: 13.5px; line-height: 1.45; }
+#advice li.rule { background: var(--panel2); border-left: 3px solid var(--blue); }
+#advice li.llm { background: #241f10; border-left: 3px solid var(--accent); }
+#advice li .src { display: block; font-size: 10px; color: var(--dim); margin-bottom: 2px; letter-spacing: 1px; }
+#feed { list-style: none; max-height: 320px; overflow-y: auto; font-size: 13px; }
+#feed li { padding: 5px 8px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; }
+#feed .t { color: var(--dim); font-variant-numeric: tabular-nums; min-width: 44px; }
+#feed .own { color: var(--green); } #feed .enemy { color: var(--red); }
+#feed li:last-child { border-bottom: none; }
+.overlay {
+  position: fixed; inset: 0; background: rgba(11,18,32,.88); z-index: 10;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  color: var(--gold); letter-spacing: 2px;
+}
+.hidden { display: none !important; }
+.foot { margin-top: 12px; font-size: 11px; color: var(--dim); }
+</style>
+</head>
+<body>
+<div id="overlay" class="overlay">等待对局…</div>
+<header>
+  <h1><span class="dot">◆</span> LoL 实时助手</h1>
+  <div id="clock">--:--</div>
+  <div id="status"></div>
+</header>
+
+<div class="grid">
+  <div class="card" style="grid-column: span 2;">
+    <h2>胜率（我方视角）</h2>
+    <div class="winwrap">
+      <div id="winProb">--</div>
+      <div class="bar">
+        <div class="track"><div id="winFill" class="fill" style="width:50%; background: linear-gradient(90deg, var(--red), var(--gold), var(--green));"></div></div>
+        <div class="scale"><span>0%</span><span>50%</span><span>100%</span></div>
+      </div>
+    </div>
+    <svg id="spark" class="spark" viewBox="0 0 600 60" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="card">
+    <h2>自己</h2>
+    <div class="kv" id="own"></div>
+  </div>
+
+  <div class="card">
+    <h2>赛前实力（段位分）</h2>
+    <div class="kv" id="rank"></div>
+  </div>
+
+  <div class="card">
+    <h2>团队差（我方 − 敌方）</h2>
+    <div class="diff" id="teamDiff"></div>
+  </div>
+
+  <div class="card">
+    <h2>事件概率</h2>
+    <div id="events"></div>
+  </div>
+
+  <div class="card">
+    <h2>建议</h2>
+    <ul id="advice"></ul>
+  </div>
+
+  <div class="card">
+    <h2>最近事件</h2>
+    <ul id="feed"></ul>
+  </div>
+</div>
+
+<div class="foot" id="foot"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (v, digits=0) => (v === null || v === undefined || isNaN(v)) ? "--" : Number(v).toFixed(digits);
+const signed = (v) => { const n = Number(v)||0; return (n>0?"+":"") + n; };
+const cls = (v) => v>0?"pos":(v<0?"neg":"zero");
+
+function sparkPath(history) {
+  const t = history.t || [], w = history.winProb || [];
+  if (w.length < 2) return "";
+  const W = 600, H = 60, P = 2;
+  const tmin = Math.min(...t), tmax = Math.max(...t);
+  const xs = tmax > tmin ? t.map(v => P + (v - tmin) / (tmax - tmin) * (W - 2*P)) : t.map(() => P);
+  const ys = w.map(v => H - P - (v * (H - 2*P)));
+  return "M" + xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" L");
+}
+
+function render(state) {
+  $("overlay").classList.toggle("hidden", state.ok || state.ended);
+  if (state.ended) { $("overlay").textContent = "回放已结束"; $("overlay").classList.remove("hidden"); }
+  else if (!state.ok) { $("overlay").textContent = "等待对局…"; }
+
+  $("clock").textContent = state.clock || "--:--";
+  const src = state.source === "replay" ? "回放模式" : "实时模式";
+  const self = state.selfName ? ` · ${state.selfName}${state.selfChampion ? " (" + state.selfChampion + ")" : ""}` : "";
+  const goldNote = state.goldSource === "sgp" ? " · 金币: SGP 1分钟口袋金币"
+    : state.goldSource === "estimate" ? " · 金币: 装备估算"
+    : state.goldSource === "live" ? " · 金币: 实时" : "";
+  const modelNote = state.model ? ` · 模型 ${state.model}` : "";
+  $("status").textContent = `${src}${self}${goldNote}${modelNote}`;
+
+  const wp = state.winProb;
+  $("winProb").textContent = wp === null || wp === undefined ? "--" : (wp*100).toFixed(1) + "%";
+  $("winProb").style.color = wp >= 0.6 ? "var(--green)" : (wp <= 0.4 ? "var(--red)" : "var(--gold)");
+  $("winFill").style.width = fmt(wp*100,1) + "%";
+  $("spark").innerHTML = `<path d="${sparkPath(state.history||{})}" fill="none" stroke="var(--gold)" stroke-width="2"/>`;
+
+  const o = state.own || {};
+  $("own").innerHTML = `
+    <span class="k">等级</span><span class="v">${fmt(o.level)}</span>
+    <span class="k">K / D / A</span><span class="v">${fmt(o.kills)} / ${fmt(o.deaths)} / ${fmt(o.assists)}</span>
+    <span class="k">补刀</span><span class="v">${fmt(o.cs)}</span>
+    <span class="k">金币</span><span class="v">${fmt(o.gold)}${state.goldEstimated ? " (估)" : ""}</span>`;
+
+  const d = state.teamDiff || {};
+  $("rank").innerHTML = state.rank ? `
+    <span class="k">我方均值</span><span class="v">${fmt(state.rank.team)}</span>
+    <span class="k">敌方均值</span><span class="v">${fmt(state.rank.enemy)}</span>
+    <span class="k">差值</span><span class="v ${cls(state.rank.diff)}">${signed(state.rank.diff)}</span>
+    <span class="k">自己</span><span class="v">${fmt(state.rank.own)}</span>` :
+    `<span class="k">状态</span><span class="v">未解析（需要客户端在线）</span>`;
+  $("teamDiff").innerHTML = `
+    <span class="k">击杀</span><span class="v ${cls(d.kills)}">${signed(d.kills)}</span>
+    <span class="k">死亡</span><span class="v ${cls(-d.deaths)}">${signed(d.deaths)}</span>
+    <span class="k">助攻</span><span class="v ${cls(d.assists)}">${signed(d.assists)}</span>
+    <span class="k">补刀</span><span class="v ${cls(d.cs)}">${signed(d.cs)}</span>
+    <span class="k">等级和</span><span class="v ${cls(d.level)}">${signed(d.level)}</span>
+    <span class="k">小龙</span><span class="v ${cls(d.dragons)}">${signed(d.dragons)}</span>
+    <span class="k">大龙</span><span class="v ${cls(d.barons)}">${signed(d.barons)}</span>
+    <span class="k">先锋</span><span class="v ${cls(d.heralds)}">${signed(d.heralds)}</span>
+    <span class="k">巢虫</span><span class="v ${cls(d.grubs)}">${signed(d.grubs)}</span>
+    <span class="k">厄塔汗</span><span class="v ${cls(d.atakhan)}">${signed(d.atakhan)}</span>
+    <span class="k">塔</span><span class="v ${cls(d.towers)}">${signed(d.towers)}</span>
+    <span class="k">水晶</span><span class="v ${cls(d.inhibitors)}">${signed(d.inhibitors)}</span>`;
+
+  const e = state.events || {};
+  const rows = [
+    ["30s 内我方击杀", e.own_kill_30s, "own"],
+    ["30s 内敌方击杀", e.enemy_kill_30s, "enemy"],
+    ["60s 内我方 Gank", e.own_gank_60s, "own"],
+    ["60s 内敌方 Gank", e.enemy_gank_60s, "enemy"],
+  ];
+  $("events").innerHTML = rows.map(([label, v, clsName]) => `
+    <div class="probrow">
+      <div class="label"><span>${label}</span><span>${v===undefined||v===null ? "--" : (v*100).toFixed(0)+"%"}</span></div>
+      <div class="track"><div class="fill ${clsName}" style="width:${v===undefined||v===null?0:(v*100).toFixed(1)}%"></div></div>
+    </div>`).join("");
+
+  const advice = state.advice || [];
+  $("advice").innerHTML = advice.map(a =>
+    `<li class="${a.source}"><span class="src">${a.source === "llm" ? "LLM 建议" : "规则建议"}</span>${a.text}</li>`
+  ).join("") || '<li class="rule">暂无建议</li>';
+
+  const feed = state.feed || [];
+  $("feed").innerHTML = feed.slice().reverse().map(ev => {
+    const m = Math.floor(ev.t / 60), s = Math.floor(ev.t % 60);
+    return `<li><span class="t">${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}</span><span class="${ev.side || ""}">${ev.text}</span></li>`;
+  }).join("") || '<li>暂无事件</li>';
+
+  const llm = state.llm || {};
+  const llmInfo = llm.enabled
+    ? (llm.error ? `LLM 出错: ${llm.error}` : `LLM 最近更新: ${llm.lastAt !== null && llm.lastAt !== undefined ? Math.floor(llm.lastAt/60) + ":" + String(Math.floor(llm.lastAt%60)).padStart(2,"0") : "--"}`)
+    : "LLM 层未启用（--llm）";
+  const modelName = state.model || "live_model2";
+  const rankNote = state.rank ? `段位分 ${Math.round(state.rank.team)} : ${Math.round(state.rank.enemy)}` : "段位未解析";
+  $("foot").textContent = `模型: ${modelName} + live_event_model · ${rankNote} · ${llmInfo}`;
+}
+
+async function poll() {
+  try {
+    const res = await fetch("/api/state");
+    if (res.ok) render(await res.json());
+  } catch (e) { /* server restarting */ }
+}
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>

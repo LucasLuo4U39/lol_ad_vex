@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实时仪表盘 · LoLAdvisor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B45309'/><path d='M8 21l5-5 4 4 7-10' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="../design-system.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 16l4.5-4.5 3.5 3.5L18 8" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span>
+        <span class="brand-name" style="display:block">实时仪表盘</span>
+        <span class="brand-sub" style="display:block">LIVE DASHBOARD</span>
+      </span>
+    </div>
+    <div class="grow"></div>
+    <div class="row row-8" style="flex:none">
+      <span class="pill pill-green" id="pillConn"><span class="status-dot live"></span>实时连接</span>
+      <span class="pill" id="pillMode">实时模式</span>
+      <span class="pill" id="pillModel">模型 —</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div id="viewStatus"></div>
+
+  <div id="viewMain">
+    <section class="hero entrance" style="--i:0">
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="54"></circle>
+          <circle class="ring-value" id="ringValue" cx="60" cy="60" r="54"></circle>
+        </svg>
+        <div class="ring-center">
+          <span class="num" id="winNum">—</span>
+          <span class="label">我方胜率</span>
+        </div>
+      </div>
+      <div class="stack stack-12" style="min-width:0">
+        <div class="hero-sub" id="heroSub">等待对局…</div>
+        <div class="curve-wrap">
+          <svg class="curve" id="curve" viewBox="0 0 600 112" height="112" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="dashGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#34c759" stop-opacity=".16"/>
+                <stop offset="100%" stop-color="#34c759" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path class="curve-area" fill="url(#dashGrad)" d=""></path>
+            <path class="curve-line" id="curveLine" stroke="#34c759" d=""></path>
+            <circle class="curve-last" r="3.4" fill="#34c759" stroke="#ffffff" cx="-100" cy="-100"></circle>
+          </svg>
+          <div class="curve-y"><span id="curveMax">—</span><span id="curveMin">—</span></div>
+        </div>
+        <div class="curve-x"><span>开局</span><span id="curveMid" class="faint">—</span><span id="curveNow">现在</span></div>
+      </div>
+    </section>
+
+    <div class="grid grid-3" style="margin-top:12px">
+      <section class="card entrance" style="--i:1">
+        <h2 class="card-title">自己 <span class="sub" id="ownSub"></span></h2>
+        <div class="kv" id="own"></div>
+      </section>
+      <section class="card entrance" style="--i:2">
+        <h2 class="card-title">赛前实力（段位分）<span id="rankPill"></span></h2>
+        <div class="kv" id="rank"></div>
+      </section>
+      <section class="card entrance" style="--i:3">
+        <h2 class="card-title">团队差（我方 − 敌方）</h2>
+        <div class="diffgrid" id="teamDiff"></div>
+      </section>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:12px">
+      <section class="card entrance" style="--i:4">
+        <h2 class="card-title">事件概率 <span class="sub">接下来 30–60 秒</span></h2>
+        <div class="stack stack-10" id="events"></div>
+      </section>
+      <section class="card entrance" style="--i:5">
+        <h2 class="card-title">建议</h2>
+        <div id="advice"></div>
+      </section>
+      <section class="card entrance" style="--i:6">
+        <h2 class="card-title">最近事件</h2>
+        <ul class="feed" id="feed" style="max-height:252px"></ul>
+      </section>
+    </div>
+  </div>
+
+  <footer class="page-foot" id="foot">LoLAdvisor v2.3.0</footer>
+</main>
+
+<script src="demo-data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  const IS_DEMO = params.get("demo") === "1";
+  const DEMO = window.LOL_DEMO;
+  const UI = DEMO.UI;
+  UI.bootTheme(params);
+  const $ = (id) => document.getElementById(id);
+
+  const SRC_CN = { live: "实时模式", replay: "回放模式", spectator: "观战模式" };
+  const GOLD_CN = { sgp: "SGP 1 分钟口袋金币", estimate: "装备估算", live: "实时" };
+
+  function winColor(p) {
+    return p >= 0.6 ? "green" : p <= 0.4 ? "red" : "amber";
+  }
+
+  function rankKindOf(s) {
+    const rk = s.rank;
+    const st = s.rankStatus;
+    if (rk) return "ok";
+    if (st && st.state) return st.state;
+    if (st && st.port === null) return "unconnected";
+    if (st && (st.lastError || st.lastNote || (st.lookupReasons && Object.keys(st.lookupReasons).length))) return "failed";
+    if (st && st.port) return "resolving";
+    return "resolving"; // 旧接口无 rankStatus（as_json 透传待 T17）：等待解析，不臆断未连接
+  }
+
+  function rankStateHtml(kind, st) {
+    st = st || {};
+    if (kind === "unconnected") {
+      return '<div class="rank-state"><div class="t1">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5M6 8h12a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><path d="M12 14v7"/></svg>' +
+        "客户端未连接</div>" +
+        '<div class="hint">请启动并登录英雄联盟客户端；连接后将自动发现并解析双方段位。</div></div>';
+    }
+    if (kind === "resolving") {
+      return '<div class="rank-state"><div class="t1"><span class="spin-mini"></span>正在解析段位…</div>' +
+        '<div class="hint">已连接客户端（端口 ' + UI.esc(st.port || "—") + "），正在读取双方段位数据，请稍候。</div></div>";
+    }
+    const lr = st.lookupReasons || {};
+    const names = Object.keys(lr);
+    let reason = st.lastError || st.lastNote || "";
+    if (!reason && names.length) reason = names[0] + "：" + lr[names[0]];
+    if (!reason) reason = "未知原因";
+    const http = st.lastHttpStatus ? "（HTTP " + st.lastHttpStatus + "）" : "";
+    let hint = "已尝试 " + (st.queries || 0) + " 次查询" + (st.errors ? "，失败 " + st.errors + " 次" : "") + "；恢复后会自动更新。";
+    if (names.length && st.lastError) hint += " 另有：" + names[0] + "：" + lr[names[0]];
+    return '<div class="rank-state fail"><div class="t1">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4 3 19h18L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="16.8" r=".5" fill="currentColor"/></svg>' +
+      "解析失败</div>" +
+      '<div class="reason">' + UI.esc(reason) + " " + http + "</div>" +
+      '<div class="hint">' + UI.esc(hint) + "</div></div>";
+  }
+
+  function probRow(label, v, kind) {
+    const p = v === null || v === undefined ? 0 : UI.clamp(v, 0, 1);
+    return '<div>' +
+      '<div class="row" style="justify-content:space-between;margin-bottom:5px">' +
+      '<span class="muted" style="font-size:12.5px">' + UI.esc(label) + "</span>" +
+      '<b class="num" style="font-size:12.5px">' + UI.fmtPct(v, 0) + "</b></div>" +
+      '<div class="progress"><div class="progress-fill ' + kind + '" style="--p:' + p.toFixed(3) + '"></div></div>' +
+      "</div>";
+  }
+
+  function render(state) {
+    showView("main");
+    const wp = state.winProb;
+    const ended = !!state.ended;
+
+    /* 顶栏 */
+    $("pillConn").innerHTML = '<span class="status-dot' + (state.ok ? " live" : " off") + '"></span>' +
+      (state.ok ? "实时连接" : "未连接");
+    $("pillConn").className = "pill" + (state.ok ? " pill-green" : "");
+    $("pillMode").textContent = SRC_CN[state.source] || state.source || "实时模式";
+    $("pillModel").textContent = state.model ? "模型 " + state.model : "模型 —";
+
+    /* 英雄区 */
+    const sub = [];
+    sub.push(SRC_CN[state.source] || state.source || "实时模式");
+    if (state.selfName) sub.push(state.selfName + (state.selfChampion ? "（" + state.selfChampion + "）" : ""));
+    if (state.rank) sub.push("段位已解析");
+    if (state.model) sub.push(state.model);
+    if (state.goldSource) sub.push("金币 · " + (GOLD_CN[state.goldSource] || state.goldSource));
+    $("heroSub").innerHTML = sub.map((s) => '<span class="pill">' + UI.esc(s) + "</span>").join("") +
+      (wp !== null && wp !== undefined ? '<span class="pill" id="deltaPill"></span>' : "");
+
+    if (wp === null || wp === undefined) {
+      $("winNum").textContent = "—";
+      UI.setRing($("ringValue"), 0);
+      $("ringValue").setAttribute("class", "ring-value");
+    } else {
+      UI.countUp($("winNum"), wp * 100, { fmt: (v) => v.toFixed(1) + "%" });
+      UI.setRing($("ringValue"), wp);
+      $("ringValue").setAttribute("class", "ring-value " + winColor(wp));
+      const h = state.history || {};
+      const first = (h.winProb || [])[0];
+      const delta = $("deltaPill");
+      if (delta && first !== undefined && first !== null) {
+        const d = (wp - first) * 100;
+        delta.textContent = "较开局 " + UI.signed(d, 1) + "pp";
+        delta.className = "pill " + (d >= 0 ? "pill-green" : "pill-red");
+      }
+    }
+
+    /* 曲线 */
+    const hist = state.history || {};
+    const r = UI.drawCurve($("curve"), hist.winProb || [], { h: 112, min: 0, max: 1 });
+    if (r) {
+      $("curveMax").textContent = (r.hi * 100).toFixed(0) + "%";
+      $("curveMin").textContent = (r.lo * 100).toFixed(0) + "%";
+    }
+    const t = hist.t || [];
+    $("curveMid").textContent = t.length ? UI.mmss(t[Math.floor(t.length / 2)]) : "—";
+    $("curveNow").textContent = state.clock && state.clock !== "--:--" ? state.clock : (t.length ? UI.mmss(t[t.length - 1]) : "现在");
+    const cls = wp !== null && wp !== undefined ? winColor(wp) : "";
+    $("curveLine").setAttribute("stroke", cls === "green" ? "#34c759" : cls === "red" ? "#ff453a" : "#ff9f0a");
+
+    /* 自己 */
+    const o = state.own || {};
+    const goldNote = state.goldEstimated ? "（估）" : "";
+    $("ownSub").textContent = state.selfName ? "" : "";
+    $("own").innerHTML =
+      '<span class="k">等级</span><span class="v">' + (o.level != null ? o.level : "—") + "</span>" +
+      '<span class="k">K / D / A</span><span class="v">' + (o.kills != null ? o.kills : "—") + " / " + (o.deaths != null ? o.deaths : "—") + " / " + (o.assists != null ? o.assists : "—") + "</span>" +
+      '<span class="k">补刀</span><span class="v">' + (o.cs != null ? UI.fmtInt(o.cs) : "—") + "</span>" +
+      '<span class="k">金币</span><span class="v">' + (o.gold != null ? UI.fmtInt(o.gold) : "—") + goldNote + "</span>";
+
+    /* 段位（三态：未连接 / 解析中 / 失败，字段见 contracts.md 第 3 节 rankStatus） */
+    const rk = state.rank;
+    const rkKind = rankKindOf(state);
+    const rkSt = state.rankStatus || {};
+    $("rankPill").className = "pill " + (rkKind === "ok" ? "pill-green" : rkKind === "failed" ? "pill-red" : "pill-amber");
+    $("rankPill").textContent = { ok: "已解析", unconnected: "未连接", resolving: "解析中", failed: "失败" }[rkKind] || rkKind;
+    if (rkKind === "ok" && rk) {
+      $("rank").innerHTML =
+        '<span class="k">我方均值</span><span class="v">' + UI.fmtInt(rk.team) + "</span>" +
+        '<span class="k">敌方均值</span><span class="v">' + UI.fmtInt(rk.enemy) + "</span>" +
+        '<span class="k">差值</span><span class="v ' + (rk.diff > 0 ? "pos" : rk.diff < 0 ? "neg" : "zero") + '">' + UI.signed(rk.diff) + "</span>" +
+        '<span class="k">自己</span><span class="v">' + UI.fmtInt(rk.own) + "</span>";
+    } else {
+      $("rank").innerHTML = rankStateHtml(rkKind, rkSt);
+    }
+
+    /* 团队差 */
+    const d = state.teamDiff || {};
+    const chip = (label, v, invert) => {
+      const good = invert ? v < 0 : v > 0;
+      const bad = invert ? v > 0 : v < 0;
+      const cls = good ? "pos" : bad ? "neg" : "zero";
+      return '<div class="dg"><span class="k">' + label + '</span><span class="v ' + cls + '">' + UI.signed(v) + "</span></div>";
+    };
+    $("teamDiff").innerHTML =
+      chip("击杀", d.kills) + chip("死亡", d.deaths, true) +
+      chip("助攻", d.assists) + chip("补刀", d.cs) +
+      chip("等级和", d.level) + chip("小龙", d.dragons) +
+      chip("大龙", d.barons) + chip("先锋", d.heralds) +
+      chip("巢虫", d.grubs) + chip("厄塔汗", d.atakhan) +
+      chip("塔", d.towers) + chip("水晶", d.inhibitors);
+
+    /* 事件概率 */
+    const e = state.events || {};
+    $("events").innerHTML =
+      probRow("30 秒内我方击杀", e.own_kill_30s, "blue") +
+      probRow("30 秒内敌方击杀", e.enemy_kill_30s, "red") +
+      probRow("60 秒内我方 Gank", e.own_gank_60s, "blue") +
+      probRow("60 秒内敌方 Gank", e.enemy_gank_60s, "red");
+
+    /* 建议 */
+    const advice = state.advice || [];
+    $("advice").innerHTML = advice.map((a) =>
+      '<div class="advice-item ' + (a.source === "llm" ? "llm" : "rule") + '">' +
+      '<span class="src">' + (a.source === "llm" ? "LLM" : "规则") + "</span>" +
+      "<span>" + UI.esc(a.text) + "</span></div>"
+    ).join("") || '<div class="faint" style="font-size:12.5px">暂无建议</div>';
+
+    /* 事件流 */
+    const feed = state.feed || [];
+    $("feed").innerHTML = feed.slice().reverse().map((ev) =>
+      '<li class="feed-item ' + (ev.side || "none") + '">' +
+      '<span class="feed-time">' + UI.mmss(ev.t) + '</span><span class="feed-dot"></span>' +
+      '<span class="txt">' + UI.esc(ev.text) + "</span></li>"
+    ).join("") || '<li class="feed-item"><span class="txt faint">暂无事件</span></li>';
+
+    /* 页脚 */
+    const llm = state.llm || {};
+    const llmInfo = llm.enabled
+      ? (llm.error ? "LLM 出错：" + llm.error : "LLM 最近更新 " + (llm.lastAt != null ? UI.mmss(llm.lastAt) : "—"))
+      : "LLM 层未启用（--llm）";
+    const rankNote = state.rank
+      ? "段位 " + UI.fmtInt(state.rank.team) + " : " + UI.fmtInt(state.rank.enemy)
+      : ({ unconnected: "段位未连接", resolving: "段位解析中", failed: "段位解析失败" }[rankKindOf(state)] || "段位未解析");
+    $("foot").textContent = "模型 " + (state.model || "live_model3") + " + live_event_model · " + rankNote + " · " + llmInfo + " · LoLAdvisor v2.3.0";
+  }
+
+  /* ---------------------------------------------------------- 三态视图 */
+  function showView(name) {
+    $("viewStatus").classList.toggle("hidden", name !== "status");
+    $("viewMain").classList.toggle("hidden", name !== "main");
+  }
+
+  function showLoading() {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="card entrance" style="--i:0"><div class="skeleton sk-hero"></div></div>' +
+      '<div class="grid grid-3" style="margin-top:12px">' +
+      [1, 2, 3].map((i) => '<div class="card entrance" style="--i:' + i + '"><div class="skeleton sk-line" style="width:96px;margin-bottom:12px"></div>' +
+        [1, 2, 3].map(() => '<div class="skeleton sk-line" style="margin:10px 0"></div>').join("") + "</div>").join("") +
+      "</div>";
+  }
+
+  function showEmpty(info) {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="empty entrance" style="--i:0">' +
+      '<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>' +
+      '<div class="empty-title">' + UI.esc((info && info.message) || "等待对局…") + "</div>" +
+      '<div class="empty-hint">' +
+      (info && info.ended
+        ? "本次回放已全部处理完毕。重新播放对局或打开新对局后会自动继续。"
+        : "打开游戏后自动连接（Live Client Data 2999）。观战 / 回放模式下请通过命令行指定视角。") +
+      "</div>" +
+      (info && info.ended && info.winProb != null
+        ? '<span class="pill pill-green" style="font-size:13px;padding:6px 14px">最终胜率 ' + (info.winProb * 100).toFixed(1) + "%</span>"
+        : "") +
+      "</div>";
+  }
+
+  function showError(info) {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="stack stack-12" style="max-width:640px;margin:0 auto;padding-top:16px">' +
+      '<div class="alert entrance" style="--i:0">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4 3 19h18L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="16.8" r=".5" fill="currentColor"/></svg>' +
+      '<div class="grow">' + UI.esc((info && info.message) || "无法获取对局数据") +
+      (info && info.detail ? '<div class="faint" style="font-size:12px;margin-top:2px">' + UI.esc(info.detail) + "</div>" : "") + "</div>" +
+      '<button type="button" class="btn btn-sm btn-secondary" id="btnRetry">重试</button>' +
+      "</div>" +
+      '<div class="empty entrance" style="--i:1">' +
+      '<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg></div>' +
+      '<div class="empty-title">连接已断开</div>' +
+      '<div class="empty-hint">页面会持续自动重连；也可以手动点击重试。</div>' +
+      "</div></div>";
+    const btn = $("btnRetry");
+    if (btn) btn.addEventListener("click", () => (IS_DEMO ? resumeDemo() : reconnect()));
+  }
+
+  /* ---------------------------------------------------------- 实时数据源 */
+  function handleState(state) {
+    if (!state) return;
+    if (state.ok) { failCount = 0; render(state); return; }
+    if (state.ended) showEmpty(state);
+    else if (state.error) showError(state);
+    else showEmpty(state);
+  }
+
+  let failCount = 0;
+  async function poll() {
+    try {
+      const res = await fetch("/api/state", { cache: "no-store" });
+      if (res.ok) handleState(await res.json());
+      else { failCount++; if (failCount >= 3) showError({ error: true, message: "服务返回异常（" + res.status + "）" }); }
+    } catch (e) {
+      failCount++;
+      if (failCount >= 3) showError({ error: true, message: "无法连接服务（http://127.0.0.1:8765）", detail: "请确认已通过 run-web.cmd 或桌面版启动实时助手。" });
+    }
+  }
+
+  function reconnect() {
+    failCount = 0;
+    showLoading();
+    poll();
+  }
+
+  /* ---------------------------------------------------------- 演示模式 */
+  const RANK = params.get("rank");
+  let demoSecond = 1380;
+  let demoTimer = null;
+
+  function applyDemo() {
+    let st = DEMO.dash.state(demoSecond);
+    if (RANK && DEMO.rankStates[RANK]) st = DEMO.applyRankState(st, RANK);
+    handleState(st);
+  }
+
+  function resumeDemo() {
+    if (demoTimer) clearInterval(demoTimer);
+    applyDemo();
+    demoTimer = setInterval(() => {
+      demoSecond += 20;
+      if (demoSecond > 1740) demoSecond = 240;
+      applyDemo();
+    }, 4000);
+  }
+
+  /* ---------------------------------------------------------- 启动 */
+  if (IS_DEMO) {
+    const initial = params.get("state") || "default";
+    UI.attachDemoPanel({
+      default: resumeDemo,
+      loading: () => { if (demoTimer) clearInterval(demoTimer); showLoading(); },
+      empty: () => { if (demoTimer) clearInterval(demoTimer); showEmpty(DEMO.dash.waiting); },
+      error: () => { if (demoTimer) clearInterval(demoTimer); showError(DEMO.dash.error); },
+    }, "实时仪表盘");
+    if (initial === "loading") showLoading();
+    else if (initial === "empty") showEmpty(DEMO.dash.waiting);
+    else if (initial === "error") showError(DEMO.dash.error);
+    else resumeDemo();
+  } else {
+    showLoading();
+    poll();
+    setInterval(poll, 2000);
+  }
+})();
+</script>
+</body>
+</html>

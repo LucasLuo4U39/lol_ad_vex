@@ -1,0 +1,37 @@
+loltestv2 打包内容
+================
+akari-match-export/  Python 工具链（v2：新增实时助手 Web 仪表盘 + LLM 建议层 +
+                     回放直播模式 + SGP 口袋金币桥 + OP.GG 英雄/对位胜率特征 +
+                     live_model3 + lgbmini 纯 Python 模型解释器等）
+replays/             两局 .rofl（901127125498、901126500254）
+analysis/            解包产物、keyframe、SGP 时间线、1 秒快照、rofl-tools（含 16.22 全球 exe 与解析器）
+dataset/             dataset_v2 / event_dataset / live_dataset（含 v3 数据集与 live_model3）
+requirements.txt     顶层 Python 依赖（含 beautifulsoup4/lightgbm；建议 venv 安装）
+
+v2 新增重点：
+- advisor_server.py + advisor_dashboard.html：本地 Web 仪表盘（胜率曲线/事件概率/建议/事件流）
+- lgbmini.py：纯 numpy 的 LightGBM 文本模型解释器（与真 lightgbm 逐行对比误差为 0）
+- sgp_gold.py：回放模式从 SGP 1 分钟帧补真实口袋金币（currentGold）
+- opgg_scrape.py / game_champs.py / build_live_dataset_v3.py / validate_v3.py：
+  OP.GG 英雄/对位胜率特征管线（全量 2,298 局重训，OOF AUC 0.8272 -> 0.8286）
+- opgg_stats.json（16.22/KR 英雄与对位胜率）、game_champs.json（2,298 局阵容）
+- lcu_replay_watch.py / sgp_players.py：LCU 观看回放 / SGP 查阵容助手
+- run-web.cmd / run-replay-web.cmd：一键启动（自动探测 .venv → %USERPROFILE% 下的 DSH Python → py -3 → python）
+- match_review.py + review_games.py + test_review.py：赛后全位置复盘（10 局样例见 analysis/game-reviews/，
+  含 index.html / OVERVIEW.md；每局 summary.json + report.md/html + narrative.md）
+- player_elo.py + test_elo.py：选手 Elo（每人最近 25 场排位 → Elo → 赛前胜率），
+  复盘时用 --elo/--elo-fetch 注入，按权重随时间衰减混进胜率曲线
+- fetch_game_summaries.py / fetch_player_ranks.py / build_elo_features.py /
+  build_live_dataset_v4.py / build_live_dataset_v5.py：玩家身份与强度特征管线
+  （2,298 局 puuid + 3,077 人段位分；live_model4=Elo 0.8257，live_model5=段位 0.8553）
+- rank_lookup.py + test_rank.py：实时段位解析（名字→puuid→段位分，LCU，6 小时缓存）；
+  advisor_server 自动切 live_model5，仪表盘显示「赛前实力（段位分）」；缺人自动补齐/回退 model3
+- desktop_app.py + prepare_assets.py + build_exe.cmd：桌面版（深色单窗口，不开网页），
+  build_exe.cmd 打成 dist\LoLAdvisor\LoLAdvisor.exe 并压缩为 dist\LoLAdvisor-win64.zip（onedir，约 24MB）
+
+未包含：
+- akari-match-export/advisor.llm.env（个人 LLM API key，永不打入任何包）
+- akari-match-export/pyreqs/（pip 依赖，用 requirements.txt 重建）
+- 逐局导出 C:\Users\Administrator\Documents\akari-top300-exports\game_*（6.1GB）
+- live_dataset_v3_partial.csv 等中间产物、_cmp_*/_smoke 训练工作目录
+- .venv（用 requirements.txt 重建）

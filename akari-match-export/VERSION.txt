@@ -1,0 +1,192 @@
+LoLAdvisor v2.3.16 · 2026-11-14
+
+本次修复（v2.3.16 · 用真实数据校正 D3 默认值）：
+- 拿到原始 live_dataset.csv（2,298 局 / 579,790 行），重建 v3/v4/v5 并实测：
+  旧口径 AUC 0.8551 / Brier 0.1555 / ECE 0.0081（与已发布 live_model5 0.8553 复现一致）
+- 按局等权改为「默认关」：实测 AUC 0.8551→0.8554（区间重叠、无收益），
+  Brier 0.1555→0.1557，ECE 反而 0.0081→0.0192（校准变差 2.4 倍）；
+  需要实验时用 --game-weight 显式开启（旧 --no-game-weight 保留兼容）
+- 去段位特征实测：AUC 0.8292 / Brier 0.1689，与 live_model3（0.8286 / 0.1688）重合，
+  说明 model5 的 +2.6pp 全部来自段位特征；线上用赛前段位可复现大部分，
+  赛后快照的时点污染约为一局 LP，模型可上线但 0.855 要标注「含段位特征」
+- 开局不是掷硬币：含段位第 1 分钟 AUC 0.70，去段位 0.549（旧说法只适用于无段位模型）
+- 校准复评（isotonic 按局交叉拟合）：A 0.0081→0.0033（Brier 略升 +0.0003）、
+  等权模型 0.0192→0.0015；原始概率已足够好，不建议上线校准器
+- 新增 docs/calibration-report-2026-11-14.md（三种口径 + 校准的完整实测与复现命令）
+- check_dataset.py 修正：玩家视角数据集同一局本就胜负各半，不再错误地要求
+  「每局 ownWin 唯一」，改为检查每局两类标签都存在；另加 v5 段位泄漏提示
+- 运行时无行为变化（本次只改训练默认值与文档/工具）
+
+本次修复（v2.3.15 · 训练口径与监控 D3）：
+- 训练按局等权（默认开）：sample_weight = 1/该局行数（整体归一化到均值 1，避免
+  把正则项放大），长局后期不再主导损失；--no-game-weight 可关
+- 指标补全：metrics.json 新增 bootstrap（按 gameId 重采样 1000 次的 AUC/Brier 区间）、
+  perMinute（每分钟 AUC/Brier/ECE）、featureStats（每列 mean/std）、patch/patches、
+  trainedAt；train_live_model.py 训练时自动落盘，失败不中断训练
+- 段位特征可剔除：--drop-rank-features 一键训「不带 rank* 特征」的诚实版本；
+  metrics.json 记 rankFeatureRisk=post-hoc（存在 rank 列未剔除时），
+  说明 model5 的段位增益来自赛后快照、线上不可复现
+- 模型体检与漂移监控（model_monitor.py）：/api/home 新增 modelInfo（模型名、
+  训练时间/年龄、patch、特征数、缺失提示）与 drift（最近一次特征相对训练基线的
+  平均偏移，有 featureStats 时是 z-score，否则用 |mean| 相对尺度），
+  失败静默为 null；模型超过 90 天或缺 patch 会给出警告
+- 段位历史快照（fetch_player_ranks.py）：每次抓取追加
+  ~/.lol-advisor/rank_snapshots/YYYY-MM-DD.jsonl（含 fetchedAt），
+  为将来按「赛前时点」重算训练特征留数据；写失败只告警
+- 打包：assets 随包 metrics.json（patch/featureStats 基线），新增
+  --hidden-import model_monitor
+- 新增回归测试 test_d3.py（35 项：权重/指标/patch/剔除rank/模型可加载）与
+  test_d3_monitor.py（72 项：体检/漂移/快照/接口静默），run-tests.cmd --all 已纳入
+- 说明：真实模型仍需拿到 live_dataset_v3/v5.csv 后重训，才能看到等权与
+  无段位版本的实测差异；本轮只在合成数据上验证了链路
+
+本次修复（v2.3.14 · 预测口径 D2）：
+- 事件提醒改口径（T60）：阈值之外再要求「连续 2 次刷新确认 + 比对方高 10pp +
+  同类提醒 3 分钟冷却」。旧口径（OOF 最优 F1 阈值）实测约 82% 的时间都在提醒、
+  命中率仅 36%（基线 33%），几乎没有选择性；新口径明显减少刷屏，参数在
+  event_thresholds.json 的 policy 块里可调（minGap / confirmations / cooldownSeconds）
+- 阈值新增「预算口径」：compute_event_thresholds.py 支持 --alert-budget-per-game
+  （默认 8 次/局），在提醒预算内取召回最高的阈值；没有训练 CSV 时自动跳过该步、
+  保留原 F1 阈值（向后兼容）
+- 目标物特征按对局时间截断（T61）：objective_counts 新增 timestamp 参数，
+  回放/离线批跑不再把「未来的大龙」算进第 5 分钟；事件时间统一秒/毫秒
+  （回放 /eventdata 是毫秒，LCD 是秒）
+- 新增校准评估工具 evaluate_calibration.py：Brier/LogLoss/AUC/等频 ECE/可靠性曲线/
+  分分钟表/按局 bootstrap，支持 --apply isotonic|platt（按局交叉拟合）对比校准前后；
+  train_live_model.py 训练时自动把 calibration 块写进 metrics.json（失败不影响训练）
+- 新增回归测试：test_d2.py（25 项：闸门/截断/预算阈值/策略加载）、
+  test_calibration.py（50 项：ECE/AUC/同分/分折/CLI），run-tests.cmd --all 已纳入
+- 说明：两份已发布模型的校准仍待用真实 oof_predictions.csv 复评（本轮无训练 CSV）
+
+本次修复（v2.3.13）：
+- 修复主页「最近 10 局」全为 0/空：LCU 该接口的 participants 不带 puuid，
+  改为先用 participantIdentities[].player.puuid 对齐 participantId 再取该条数据，
+  champId/胜负/KDA 恢复真实值（已用本机 LCU 实测 10/10 局）
+- 修复召唤师头像接口：/icon/profile/<id>.png 用 Pillow 转成真 PNG 返回，
+  缓存头改为 no-store（与「静态资源一律 no-store」一致；转码失败回退 JPEG）
+- 修复未开局时「赛前实力」永远「解析中」：/api/home 在 BP 桥接之后用 LCU
+  段位快照（/lol-ranked/v1/current-ranked-stats，单双→灵活回退）补 rank.own 与
+  rankStatus=ok，不伪造 team/enemy 均值；对局开始后仍由真实链路覆盖
+- 修复胜率归因 chips 恒显示 +0.0pp：后端 delta 是概率差（0.021），前端改为
+  ×100 后再按 pp 显示（与 demo 的 2.1 兼容）
+- 打野雷达中文化：新增 champCn / lastSeen.zoneCn / predicted.zoneCn /
+  threatLaneCn / route[].campCn，界面优先显示中文，机器键字段保留兼容
+- 打野雷达路线：route 由「当前+下一」改为完整开野路线（5-6 个营地节点，
+  含 done/current 标记），无路线数据时自动回退
+- 修复打野面板采集停止时显示破图：img{display:block} 压过 [hidden]，
+  新增 .jp-frame[hidden]{display:none}
+- 修复无 ?v= 打开时误判版本、弹「检测到新版本请重启」：页面版本只认 URL 的
+  ?v= 或 /api/home 版本，窄栏只显示短版本号并防溢出
+- 归因单位统一：attribution 每项新增 pp 字段（delta×100），前端优先用 pp，
+  不再依赖「量级猜测」；契约同步说明
+- 段位三态细化：未开局只有本人段位时显示「单双排/灵活排位 + 段位 + 段位分」，
+  不再把「我方/敌方均值」渲染成三个「—」；LCU 的 NONE/UNRANKED 归一为未定级
+- 健壮性：participantIdentities 混入非 dict、participantId 类型不一致（int/str）、
+  打野路线数据畸形（routes/steps/config 类型不对）时都不再抛异常或 500
+- 打野雷达区域中文化补充小地图象限（左上/右上/左下/右下区域）与大小写不敏感
+- 头像按 iconId 缓存转码结果（页面每 15s 重绘不再重复解码/编码），
+  前端在 iconId/首字母未变时不重建 <img>，避免重复下载
+- 打包：previews 截图目录不再打进发布包（prepare_assets 生成 build_ui 暂存目录），
+  包体减少约 2.3MB；.spec 与 build_exe.cmd 口径对齐，删除两个废弃 Dbg spec
+- 新增左下角悬浮窗（T59）：对局中不用切屏就能看到当前胜率、60 秒趋势（pp/分）、
+  对局时间、当前模型与一条建议；半透明圆角卡片、置顶、鼠标穿透（点击直接落到游戏），
+  纯外部 Win32 窗口（ctypes，无第三方依赖），不注入游戏进程、不装钩子；
+  对局结束/未开局自动隐藏，`--no-overlay` 可关闭。注意：游戏需为无边框/窗口模式
+- 测试门禁修正：test_docs 对运行时侧 metrics.json 的 CSV 缺失由 FAIL 改为 WARN
+  （运行时不读 CSV，模型由同目录 model.txt 提供），并新增模型文件存在性检查；
+  新增 test_v2313.py 回归用例（32 项，假 LCU 数据，不需要客户端）
+- 采集头像模板缓存改为可写目录（冻结态优先 %LOCALAPPDATA%\LoLAdvisor），
+  安装到只读目录时不再写失败
+
+本次修复（v2.3.12）：
+- 修复雷达面板显示断口：/api/jungler 改为前端契约形状（state/capture/jungler/
+  threatLane/lastSeen/predicted/route），面板三态与时间轴正常渲染（旧字段保留兼容）
+- 修复选人页归因行显示断口：选人模型线性归因接入（attribute_linear top3 输出
+  {key,nameCn,delta}），选人板块归因 chips 真实显示「为什么是这个胜率」
+- 胜率归因 chips：/api/state 新增 attribution（top3 特征与 Δpp——反事实归因，
+  展示「为什么是这个胜率」；无模型/无特征时为 null）
+- 事件建议阈值优化：击杀/gank 建议改用 OOF 最优 F1 阈值（约 0.35-0.39）触发，
+  灵敏度提升，事件阈值文件随包
+- 打野雷达：屏幕采集（1fps）+ 小地图英雄识别 + OP.GG 开野路线追踪，
+  /api/jungler 与 /capture/frame.jpg 接口；统计推测（非真实视野），
+  需无边框/窗口模式，分辨率/阈值可实测校准
+- 前序修复：资源版本化缓存击穿、看门狗自诊断、单实例互斥等（v2.3.10 及更早）
+- 修复页面初始化失败（主页点不进）：静态资源引用全部带版本参数（升级后旧缓存
+  必然失效）+ 启动看门狗自诊断分类（预算放宽 5s、横幅动态清除、booted 清计数）
+- 单实例互斥：启动时自动结束其它 LoLAdvisor 旧实例，防止多实例/旧窗口并存
+  导致新旧资源混跑（旧窗口内存跑旧 JS、页面错乱）
+- 版本自刷新：一体页发现服务端版本与自身不一致时自动重载
+- 启动看门狗：服务异常时页面显示错误横幅并可恢复
+- 主页视图：侧边栏新增「主页」入口（当前召唤师头像 / 单双排+灵活排位段位 / 最近 10 局），
+  后端新增 /api/profile 与 /icon/profile/<id>.png 头像代理
+- 修复阵容曲线 100% 爆炸：末端锚定由等比缩放改为形状保持的加法平移（clamp 0.02-0.98），
+  小末端值不再把前段顶到 100%
+- 基线与分路曲线不再平线：改为有曲线英雄的 games 加权平均（随分钟波动）
+- 曲线面板常驻己方英雄曲线：/api/state 新增 teamCurves（己方已锁英雄各自分路的
+  胜率-时间曲线，champKey→{minutes,winProb}，未锁省略，curves.json 缺失→null）
+- heroCurves 形状修正为 champKey→曲线 MAP（与页面 heroSel 键一致）
+- 修复窗口缓存旧页面（「设置打不开、左侧栏缺失」）：所有页面/静态资源响应一律
+  no-store（不再 max-age 缓存），主窗口 URL 附带版本参数双保险
+- counter 推荐修复：自定义房从 session.actions 重建敌方已锁阵容（theirTeam 为空也能拿到）；
+  敌方任一英雄已知即走对位克制推荐，我方位置未知时按敌方已锁分路跨分路克制；
+  梯度回退明确标注（【梯度】前缀 + recSource/recNote + 日志）
+- 深色电竞主题：设置面板新增「主题」开关（浅色暖色 / 深色电竞：黑金 + 蓝紫霓虹），
+  即时切换、本地记忆；?theme=dark 可强制深色（截图/演示）
+- 一体化单页：主窗口改为 ui/next/app.html（侧栏 + 多栏布局，选人助手直接内嵌为板块，
+  不套 iframe、不另开窗口）；home 服务同源代理 /draft/state、/draft/events（SSE 透传）
+  与 /icon/*，桌面版无 CORS 问题
+- BP/预选阶段主页「赛前实力」即显示双方段位（从选人服务桥接，与选人页口径一致）
+- 敌方智能分路：敌方已锁英雄按 OP.GG 五路 pickRate 枚举最优分派（theirTeam 带 laneProb，
+  无数据回退客户端位置）
+- counter 推荐：按对位克制筛选（本路对位为主 + 其余 4 人加成、games 加权）+ 英雄强度排序，
+  无对位数据回退原梯度榜
+- 胜率-时间曲线：/api/state 新增 curve（我方阵容加权曲线，末端锚定当前胜率）与 heroCurves
+  （前 6 候选在我方分路的曲线）；curves.json 缺失时返回 null，页面回退选人过程曲线
+- 单窗口外壳：主窗口改为 ui/next/shell.html（左侧导航 + 主页/选人助手/仪表盘三视图内嵌，
+  按契约注入 window.LOL_SHELL），打开入口改为视图切换，不再弹新窗口
+- 选人助手胜率随选人实时更新：修复一方未锁英雄时 winProb 被钉在 0.5 的问题（v2.3.1 起）
+- 段位解析自愈与状态透传：LCU 断开自动冷却重试、解析空结果自动重试；
+  /api/state 与 /api/home 透出 rankStatus/rankError（解析失败原因/查无此人/未定级）
+- exe --selftest/--diag 可靠退出：os._exit 直退，不再偶发挂起（v2.3.1 起）
+
+v2.3.1：
+- exe --selftest / --diag 偶尔挂起不退：打包版改为日志落盘后 os._exit 直接退出，
+  不再等待解释器关闭（规避残留非 daemon 线程与错误对话框卡死）；
+  build_exe.cmd 的自动自检改为 start /wait 等待 GUI 子进程并校验退出码
+
+本次更新（v2.3.0）：
+- 三个界面全面重写为统一苹果风格 Web 界面（浅色、毛玻璃、圆角卡片，全部资源本地化、零外链）
+- 桌面主窗口由 tkinter 改为 Web 渲染：Edge app 模式加载 ui/next/home.html，
+  进程内提供 GET /api/home；主界面含状态总览、胜率曲线、选人助手/仪表盘入口、设置与自检
+- 选人助手与 Web 仪表盘换用新页面（ui/next/champ_select.html、ui/next/dashboard.html），
+  接口字段与刷新/重连逻辑不变
+- --demo 进入静态演示模式（?demo=1，不依赖对局数据）；生产入口不带演示参数
+
+v2.2.2：
+- 桌面版「选人助手」打包后丢失 OP.GG 数据：修正冻结路径，版本/对线胜率恢复显示
+- Web 仪表盘「巢虫」一直显示 0：前端字段名与服务端对齐
+- 实时事件时序特征接入 + 段位部分缺失时强制回退 live_model3（数值更稳）
+
+v2.2.1：
+- 选人助手页面「渲染异常：Cannot read properties of null (reading 'classList')」：
+  阵容刷新时把等待面板/表头一起清掉了，第二次刷新报错；已调整结构并加防御
+- 渲染异常现在会保留最近一次错误文字（页面右下角隐藏记录），方便报错排查
+
+本次新增（v2.2）：
+- 「选人助手」：主窗口右上角按钮打开独立深色窗口，进 BP 自动显示：
+  两方横向 5 路阵容（我的行金色高亮 + 「我」标签 + 分路/ID）、双方 ban、
+  阵容胜率条、选人过程曲线、按你的位置推荐 6 个英雄（版本/对线/高分段/个人战绩）
+- 数据走 LCU WebSocket 实时推送（阿卡丽同款），锁定英雄即时显示，无需手动刷新
+- 进游戏后自动冻结最后阵容，并用游戏内实时接口补齐敌方英雄
+- 客户端重启后自动重连（端口/token 变化无需重启程序）
+
+历史修复（v2）：
+- 观战/回放模式没有 activePlayer 导致整屏 0：自动挑视角
+- 观战金币改为「装备估算」；未进对局显示「等待对局…」
+- --diag / --player / --no-ranks / --no-llm / --demo / --selftest 参数
+
+文件：
+  LoLAdvisor.exe   主程序
+  _internal\       依赖（模型/运行时，勿删）
+  app.ico          图标
+  使用说明.txt

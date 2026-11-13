@@ -1,0 +1,1055 @@
+{
+  "model": {
+    "features": [
+      "opgg_TOP",
+      "mu_TOP",
+      "cohort_TOP",
+      "rank_TOP",
+      "opgg_JUNGLE",
+      "mu_JUNGLE",
+      "cohort_JUNGLE",
+      "rank_JUNGLE",
+      "opgg_MIDDLE",
+      "mu_MIDDLE",
+      "cohort_MIDDLE",
+      "rank_MIDDLE",
+      "opgg_BOTTOM",
+      "mu_BOTTOM",
+      "cohort_BOTTOM",
+      "rank_BOTTOM",
+      "opgg_UTILITY",
+      "mu_UTILITY",
+      "cohort_UTILITY",
+      "rank_UTILITY",
+      "rank_avg",
+      "own_opgg",
+      "enemy_opgg",
+      "own_cohort",
+      "enemy_cohort",
+      "own_rank",
+      "enemy_rank"
+    ],
+    "mean": [
+      0.000478,
+      -0.002473,
+      0.000305,
+      -1.630418,
+      -0.000787,
+      -0.00062,
+      -0.003451,
+      -1.573695,
+      6e-05,
+      0.000928,
+      -0.00185,
+      -1.939413,
+      2.6e-05,
+      0.00087,
+      -0.002573,
+      -0.605879,
+      -0.000564,
+      -0.000245,
+      -0.001321,
+      -1.398551,
+      -1.429591,
+      0.00133,
+      0.001487,
+      0.00063,
+      0.002409,
+      5.889305,
+      6.032264
+    ],
+    "scale": [
+      0.019577,
+      0.04599,
+      0.06011,
+      13.603001,
+      0.024446,
+      0.048318,
+      0.075782,
+      14.057254,
+      0.023921,
+      0.04456,
+      0.069952,
+      14.7259,
+      0.015909,
+      0.037096,
+      0.063342,
+      13.966329,
+      0.020312,
+      0.038704,
+      0.062257,
+      13.515084,
+      4.145019,
+      0.006644,
+      0.006496,
+      0.021199,
+      0.020567,
+      0.634073,
+      0.611902
+    ],
+    "coef": [
+      0.081778,
+      -0.072014,
+      -0.061852,
+      0.071033,
+      0.073628,
+      -0.067757,
+      0.018221,
+      0.186412,
+      0.011649,
+      0.039679,
+      -0.052098,
+      0.196111,
+      0.045295,
+      -0.011491,
+      0.013246,
+      0.093334,
+      0.014364,
+      -0.000112,
+      0.078081,
+      0.128014,
+      0.45878,
+      0.118703,
+      -0.023042,
+      0.033067,
+      0.036817,
+      0.13666,
+      -0.169166
+    ],
+    "intercept": -0.189531,
+    "auc": 0.6878,
+    "rows": 2298,
+    "baseRate": 0.4582,
+    "trainedAt": "2026-11-10"
+  },
+  "champStats": {
+    "BOTTOM": {
+      "kaisa": {
+        "games": 514,
+        "wr": 0.4848
+      },
+      "aphelios": {
+        "games": 456,
+        "wr": 0.4509
+      },
+      "yunara": {
+        "games": 402,
+        "wr": 0.5507
+      },
+      "tristana": {
+        "games": 337,
+        "wr": 0.4928
+      },
+      "xayah": {
+        "games": 317,
+        "wr": 0.5076
+      },
+      "jinx": {
+        "games": 311,
+        "wr": 0.5635
+      },
+      "zeri": {
+        "games": 309,
+        "wr": 0.5358
+      },
+      "lucian": {
+        "games": 294,
+        "wr": 0.5294
+      },
+      "sivir": {
+        "games": 283,
+        "wr": 0.5051
+      },
+      "kalista": {
+        "games": 160,
+        "wr": 0.5
+      },
+      "corki": {
+        "games": 153,
+        "wr": 0.4545
+      },
+      "ezreal": {
+        "games": 153,
+        "wr": 0.4667
+      },
+      "jhin": {
+        "games": 103,
+        "wr": 0.3913
+      },
+      "caitlyn": {
+        "games": 95,
+        "wr": 0.4766
+      },
+      "draven": {
+        "games": 93,
+        "wr": 0.581
+      },
+      "missfortune": {
+        "games": 88,
+        "wr": 0.45
+      },
+      "twitch": {
+        "games": 81,
+        "wr": 0.5376
+      },
+      "viktor": {
+        "games": 46,
+        "wr": 0.5345
+      },
+      "ziggs": {
+        "games": 42,
+        "wr": 0.5741
+      },
+      "nilah": {
+        "games": 41,
+        "wr": 0.4906
+      },
+      "yasuo": {
+        "games": 39,
+        "wr": 0.4902
+      },
+      "varus": {
+        "games": 36,
+        "wr": 0.5
+      },
+      "aurelionsol": {
+        "games": 32,
+        "wr": 0.4091
+      },
+      "ashe": {
+        "games": 26,
+        "wr": 0.3947
+      }
+    },
+    "UTILITY": {
+      "thresh": {
+        "games": 480,
+        "wr": 0.5061
+      },
+      "lulu": {
+        "games": 366,
+        "wr": 0.4947
+      },
+      "nautilus": {
+        "games": 349,
+        "wr": 0.554
+      },
+      "braum": {
+        "games": 306,
+        "wr": 0.5031
+      },
+      "alistar": {
+        "games": 282,
+        "wr": 0.5238
+      },
+      "rell": {
+        "games": 281,
+        "wr": 0.5461
+      },
+      "rakan": {
+        "games": 250,
+        "wr": 0.5191
+      },
+      "blitzcrank": {
+        "games": 225,
+        "wr": 0.4684
+      },
+      "leona": {
+        "games": 154,
+        "wr": 0.4759
+      },
+      "nami": {
+        "games": 151,
+        "wr": 0.411
+      },
+      "pyke": {
+        "games": 121,
+        "wr": 0.5639
+      },
+      "janna": {
+        "games": 117,
+        "wr": 0.5659
+      },
+      "yuumi": {
+        "games": 117,
+        "wr": 0.4031
+      },
+      "pantheon": {
+        "games": 113,
+        "wr": 0.52
+      },
+      "karma": {
+        "games": 113,
+        "wr": 0.488
+      },
+      "seraphine": {
+        "games": 110,
+        "wr": 0.5164
+      },
+      "neeko": {
+        "games": 104,
+        "wr": 0.5086
+      },
+      "lux": {
+        "games": 88,
+        "wr": 0.49
+      },
+      "elise": {
+        "games": 84,
+        "wr": 0.4792
+      },
+      "milio": {
+        "games": 83,
+        "wr": 0.4632
+      },
+      "bard": {
+        "games": 57,
+        "wr": 0.4058
+      },
+      "swain": {
+        "games": 53,
+        "wr": 0.4154
+      },
+      "camille": {
+        "games": 47,
+        "wr": 0.5763
+      },
+      "taric": {
+        "games": 43,
+        "wr": 0.5818
+      },
+      "poppy": {
+        "games": 41,
+        "wr": 0.434
+      },
+      "soraka": {
+        "games": 39,
+        "wr": 0.4902
+      },
+      "tahmkench": {
+        "games": 32,
+        "wr": 0.4545
+      },
+      "morgana": {
+        "games": 30,
+        "wr": 0.4762
+      },
+      "sona": {
+        "games": 29,
+        "wr": 0.4878
+      },
+      "sylas": {
+        "games": 27,
+        "wr": 0.5385
+      },
+      "senna": {
+        "games": 25,
+        "wr": 0.4054
+      },
+      "renata": {
+        "games": 25,
+        "wr": 0.4865
+      }
+    },
+    "JUNGLE": {
+      "leesin": {
+        "games": 322,
+        "wr": 0.479
+      },
+      "taliyah": {
+        "games": 312,
+        "wr": 0.5802
+      },
+      "nidalee": {
+        "games": 279,
+        "wr": 0.5155
+      },
+      "khazix": {
+        "games": 249,
+        "wr": 0.5287
+      },
+      "graves": {
+        "games": 246,
+        "wr": 0.4186
+      },
+      "qiyana": {
+        "games": 244,
+        "wr": 0.4453
+      },
+      "talon": {
+        "games": 235,
+        "wr": 0.4818
+      },
+      "viego": {
+        "games": 193,
+        "wr": 0.5024
+      },
+      "lillia": {
+        "games": 189,
+        "wr": 0.5522
+      },
+      "elise": {
+        "games": 156,
+        "wr": 0.506
+      },
+      "rengar": {
+        "games": 152,
+        "wr": 0.5915
+      },
+      "naafiri": {
+        "games": 143,
+        "wr": 0.4839
+      },
+      "reksai": {
+        "games": 132,
+        "wr": 0.5278
+      },
+      "hecarim": {
+        "games": 126,
+        "wr": 0.471
+      },
+      "kindred": {
+        "games": 118,
+        "wr": 0.6231
+      },
+      "jayce": {
+        "games": 108,
+        "wr": 0.4417
+      },
+      "xinzhao": {
+        "games": 105,
+        "wr": 0.4786
+      },
+      "sylas": {
+        "games": 102,
+        "wr": 0.4211
+      },
+      "ekko": {
+        "games": 97,
+        "wr": 0.5229
+      },
+      "zyra": {
+        "games": 83,
+        "wr": 0.4526
+      },
+      "jarvaniv": {
+        "games": 79,
+        "wr": 0.5275
+      },
+      "kayn": {
+        "games": 77,
+        "wr": 0.4607
+      },
+      "belveth": {
+        "games": 75,
+        "wr": 0.5402
+      },
+      "chogath": {
+        "games": 68,
+        "wr": 0.5
+      },
+      "locke": {
+        "games": 66,
+        "wr": 0.5385
+      },
+      "karthus": {
+        "games": 65,
+        "wr": 0.5844
+      },
+      "ambessa": {
+        "games": 59,
+        "wr": 0.5493
+      },
+      "wukong": {
+        "games": 46,
+        "wr": 0.4138
+      },
+      "zac": {
+        "games": 46,
+        "wr": 0.4828
+      },
+      "evelynn": {
+        "games": 46,
+        "wr": 0.5345
+      },
+      "diana": {
+        "games": 43,
+        "wr": 0.4909
+      },
+      "masteryi": {
+        "games": 42,
+        "wr": 0.4074
+      },
+      "gwen": {
+        "games": 29,
+        "wr": 0.5366
+      },
+      "olaf": {
+        "games": 26,
+        "wr": 0.5263
+      },
+      "fiddlesticks": {
+        "games": 23,
+        "wr": 0.5143
+      },
+      "vi": {
+        "games": 23,
+        "wr": 0.4857
+      }
+    },
+    "TOP": {
+      "yone": {
+        "games": 307,
+        "wr": 0.5016
+      },
+      "jax": {
+        "games": 264,
+        "wr": 0.5399
+      },
+      "malphite": {
+        "games": 204,
+        "wr": 0.5093
+      },
+      "jayce": {
+        "games": 200,
+        "wr": 0.5236
+      },
+      "chogath": {
+        "games": 193,
+        "wr": 0.522
+      },
+      "camille": {
+        "games": 179,
+        "wr": 0.445
+      },
+      "renekton": {
+        "games": 177,
+        "wr": 0.4868
+      },
+      "fiora": {
+        "games": 177,
+        "wr": 0.5079
+      },
+      "drmundo": {
+        "games": 169,
+        "wr": 0.4696
+      },
+      "ambessa": {
+        "games": 165,
+        "wr": 0.4576
+      },
+      "pantheon": {
+        "games": 151,
+        "wr": 0.5276
+      },
+      "ksante": {
+        "games": 137,
+        "wr": 0.4765
+      },
+      "aatrox": {
+        "games": 122,
+        "wr": 0.4254
+      },
+      "olaf": {
+        "games": 121,
+        "wr": 0.5113
+      },
+      "mordekaiser": {
+        "games": 121,
+        "wr": 0.4737
+      },
+      "singed": {
+        "games": 105,
+        "wr": 0.5897
+      },
+      "gangplank": {
+        "games": 92,
+        "wr": 0.4904
+      },
+      "sion": {
+        "games": 85,
+        "wr": 0.5258
+      },
+      "nasus": {
+        "games": 77,
+        "wr": 0.5056
+      },
+      "kennen": {
+        "games": 77,
+        "wr": 0.5618
+      },
+      "irelia": {
+        "games": 73,
+        "wr": 0.5529
+      },
+      "vladimir": {
+        "games": 71,
+        "wr": 0.4096
+      },
+      "tryndamere": {
+        "games": 69,
+        "wr": 0.5185
+      },
+      "ornn": {
+        "games": 69,
+        "wr": 0.4938
+      },
+      "zaahen": {
+        "games": 68,
+        "wr": 0.55
+      },
+      "yasuo": {
+        "games": 66,
+        "wr": 0.4231
+      },
+      "gnar": {
+        "games": 66,
+        "wr": 0.4872
+      },
+      "darius": {
+        "games": 61,
+        "wr": 0.5068
+      },
+      "rumble": {
+        "games": 60,
+        "wr": 0.4583
+      },
+      "riven": {
+        "games": 59,
+        "wr": 0.493
+      },
+      "shen": {
+        "games": 44,
+        "wr": 0.5357
+      },
+      "illaoi": {
+        "games": 43,
+        "wr": 0.4909
+      },
+      "akali": {
+        "games": 42,
+        "wr": 0.5556
+      },
+      "zac": {
+        "games": 37,
+        "wr": 0.5306
+      },
+      "kled": {
+        "games": 37,
+        "wr": 0.551
+      },
+      "volibear": {
+        "games": 34,
+        "wr": 0.3696
+      },
+      "gwen": {
+        "games": 33,
+        "wr": 0.4667
+      },
+      "sett": {
+        "games": 32,
+        "wr": 0.5227
+      },
+      "gragas": {
+        "games": 29,
+        "wr": 0.5854
+      },
+      "lissandra": {
+        "games": 28,
+        "wr": 0.425
+      },
+      "anivia": {
+        "games": 22,
+        "wr": 0.5294
+      },
+      "garen": {
+        "games": 21,
+        "wr": 0.4848
+      },
+      "yorick": {
+        "games": 20,
+        "wr": 0.5625
+      }
+    },
+    "MIDDLE": {
+      "yone": {
+        "games": 293,
+        "wr": 0.4918
+      },
+      "galio": {
+        "games": 222,
+        "wr": 0.4487
+      },
+      "ekko": {
+        "games": 220,
+        "wr": 0.5086
+      },
+      "locke": {
+        "games": 213,
+        "wr": 0.5111
+      },
+      "katarina": {
+        "games": 192,
+        "wr": 0.4853
+      },
+      "syndra": {
+        "games": 172,
+        "wr": 0.4891
+      },
+      "yasuo": {
+        "games": 171,
+        "wr": 0.4809
+      },
+      "lissandra": {
+        "games": 162,
+        "wr": 0.4885
+      },
+      "leblanc": {
+        "games": 154,
+        "wr": 0.5964
+      },
+      "viktor": {
+        "games": 149,
+        "wr": 0.4658
+      },
+      "akali": {
+        "games": 148,
+        "wr": 0.4813
+      },
+      "vladimir": {
+        "games": 130,
+        "wr": 0.5282
+      },
+      "pantheon": {
+        "games": 127,
+        "wr": 0.5612
+      },
+      "sylas": {
+        "games": 120,
+        "wr": 0.4848
+      },
+      "zed": {
+        "games": 114,
+        "wr": 0.5317
+      },
+      "zoe": {
+        "games": 104,
+        "wr": 0.5776
+      },
+      "talon": {
+        "games": 99,
+        "wr": 0.5315
+      },
+      "diana": {
+        "games": 94,
+        "wr": 0.5566
+      },
+      "twistedfate": {
+        "games": 83,
+        "wr": 0.5368
+      },
+      "ahri": {
+        "games": 75,
+        "wr": 0.4828
+      },
+      "vex": {
+        "games": 74,
+        "wr": 0.5581
+      },
+      "jayce": {
+        "games": 74,
+        "wr": 0.5581
+      },
+      "orianna": {
+        "games": 72,
+        "wr": 0.4762
+      },
+      "hwei": {
+        "games": 68,
+        "wr": 0.425
+      },
+      "kassadin": {
+        "games": 65,
+        "wr": 0.4805
+      },
+      "aurora": {
+        "games": 64,
+        "wr": 0.5395
+      },
+      "aurelionsol": {
+        "games": 61,
+        "wr": 0.4384
+      },
+      "irelia": {
+        "games": 57,
+        "wr": 0.4783
+      },
+      "xerath": {
+        "games": 53,
+        "wr": 0.5231
+      },
+      "fizz": {
+        "games": 53,
+        "wr": 0.4769
+      },
+      "cassiopeia": {
+        "games": 53,
+        "wr": 0.4
+      },
+      "annie": {
+        "games": 52,
+        "wr": 0.5625
+      },
+      "akshan": {
+        "games": 48,
+        "wr": 0.4
+      },
+      "qiyana": {
+        "games": 44,
+        "wr": 0.5357
+      },
+      "taliyah": {
+        "games": 43,
+        "wr": 0.4909
+      },
+      "malzahar": {
+        "games": 39,
+        "wr": 0.4118
+      },
+      "corki": {
+        "games": 36,
+        "wr": 0.4583
+      },
+      "lux": {
+        "games": 36,
+        "wr": 0.5417
+      },
+      "kennen": {
+        "games": 31,
+        "wr": 0.6977
+      },
+      "ryze": {
+        "games": 30,
+        "wr": 0.5
+      },
+      "nasus": {
+        "games": 26,
+        "wr": 0.6053
+      },
+      "tristana": {
+        "games": 23,
+        "wr": 0.4857
+      },
+      "neeko": {
+        "games": 23,
+        "wr": 0.3714
+      },
+      "singed": {
+        "games": 22,
+        "wr": 0.4706
+      },
+      "naafiri": {
+        "games": 21,
+        "wr": 0.4545
+      },
+      "swain": {
+        "games": 21,
+        "wr": 0.5455
+      },
+      "veigar": {
+        "games": 20,
+        "wr": 0.4688
+      },
+      "anivia": {
+        "games": 20,
+        "wr": 0.5
+      },
+      "ziggs": {
+        "games": 20,
+        "wr": 0.4062
+      }
+    }
+  },
+  "champNames": {
+    "ambessa": "Ambessa",
+    "leesin": "LeeSin",
+    "vladimir": "Vladimir",
+    "caitlyn": "Caitlyn",
+    "tahmkench": "TahmKench",
+    "jayce": "Jayce",
+    "viego": "Viego",
+    "syndra": "Syndra",
+    "yunara": "Yunara",
+    "lulu": "Lulu",
+    "ksante": "KSante",
+    "kindred": "Kindred",
+    "locke": "Locke",
+    "zed": "Zed",
+    "pantheon": "Pantheon",
+    "olaf": "Olaf",
+    "chogath": "Chogath",
+    "vex": "Vex",
+    "jinx": "Jinx",
+    "braum": "Braum",
+    "reksai": "RekSai",
+    "taliyah": "Taliyah",
+    "akali": "Akali",
+    "kaisa": "Kaisa",
+    "kalista": "Kalista",
+    "camille": "Camille",
+    "yone": "Yone",
+    "naafiri": "Naafiri",
+    "viktor": "Viktor",
+    "qiyana": "Qiyana",
+    "katarina": "Katarina",
+    "zeri": "Zeri",
+    "blitzcrank": "Blitzcrank",
+    "yasuo": "Yasuo",
+    "nautilus": "Nautilus",
+    "riven": "Riven",
+    "ekko": "Ekko",
+    "lucian": "Lucian",
+    "rakan": "Rakan",
+    "vayne": "Vayne",
+    "kennen": "Kennen",
+    "wukong": "MonkeyKing",
+    "aphelios": "Aphelios",
+    "gangplank": "Gangplank",
+    "graves": "Graves",
+    "rammus": "Rammus",
+    "mordekaiser": "Mordekaiser",
+    "tristana": "Tristana",
+    "janna": "Janna",
+    "nidalee": "Nidalee",
+    "twitch": "Twitch",
+    "elise": "Elise",
+    "fiddlesticks": "FiddleSticks",
+    "poppy": "Poppy",
+    "malphite": "Malphite",
+    "ziggs": "Ziggs",
+    "neeko": "Neeko",
+    "renekton": "Renekton",
+    "draven": "Draven",
+    "pyke": "Pyke",
+    "lux": "Lux",
+    "yorick": "Yorick",
+    "ashe": "Ashe",
+    "seraphine": "Seraphine",
+    "singed": "Singed",
+    "xerath": "Xerath",
+    "drmundo": "DrMundo",
+    "hecarim": "Hecarim",
+    "missfortune": "MissFortune",
+    "soraka": "Soraka",
+    "jhin": "Jhin",
+    "zoe": "Zoe",
+    "zac": "Zac",
+    "rengar": "Rengar",
+    "nasus": "Nasus",
+    "rumble": "Rumble",
+    "alistar": "Alistar",
+    "swain": "Swain",
+    "fiora": "Fiora",
+    "talon": "Talon",
+    "sylas": "Sylas",
+    "taric": "Taric",
+    "aurelionsol": "AurelionSol",
+    "varus": "Varus",
+    "rell": "Rell",
+    "jax": "Jax",
+    "corki": "Corki",
+    "irelia": "Irelia",
+    "thresh": "Thresh",
+    "karma": "Karma",
+    "milio": "Milio",
+    "belveth": "Belveth",
+    "lissandra": "Lissandra",
+    "sivir": "Sivir",
+    "zaahen": "Zaahen",
+    "xayah": "Xayah",
+    "annie": "Annie",
+    "heimerdinger": "Heimerdinger",
+    "sion": "Sion",
+    "maokai": "Maokai",
+    "sett": "Sett",
+    "tryndamere": "Tryndamere",
+    "nocturne": "Nocturne",
+    "akshan": "Akshan",
+    "lillia": "Lillia",
+    "leblanc": "Leblanc",
+    "ezreal": "Ezreal",
+    "kled": "Kled",
+    "xinzhao": "XinZhao",
+    "hwei": "Hwei",
+    "malzahar": "Malzahar",
+    "darius": "Darius",
+    "twistedfate": "TwistedFate",
+    "fizz": "Fizz",
+    "gwen": "Gwen",
+    "aatrox": "Aatrox",
+    "khazix": "Khazix",
+    "galio": "Galio",
+    "ivern": "Ivern",
+    "warwick": "Warwick",
+    "nilah": "Nilah",
+    "nami": "Nami",
+    "shaco": "Shaco",
+    "leona": "Leona",
+    "morgana": "Morgana",
+    "ahri": "Ahri",
+    "gnar": "Gnar",
+    "ornn": "Ornn",
+    "mel": "Mel",
+    "karthus": "Karthus",
+    "aurora": "Aurora",
+    "volibear": "Volibear",
+    "kayn": "Kayn",
+    "cassiopeia": "Cassiopeia",
+    "orianna": "Orianna",
+    "briar": "Briar",
+    "illaoi": "Illaoi",
+    "brand": "Brand",
+    "yuumi": "Yuumi",
+    "jarvaniv": "JarvanIV",
+    "nunu": "Nunu",
+    "shen": "Shen",
+    "bard": "Bard",
+    "sona": "Sona",
+    "ryze": "Ryze",
+    "evelynn": "Evelynn",
+    "zyra": "Zyra",
+    "kassadin": "Kassadin",
+    "veigar": "Veigar",
+    "anivia": "Anivia",
+    "diana": "Diana",
+    "kayle": "Kayle",
+    "kogmaw": "KogMaw",
+    "vi": "Vi",
+    "sejuani": "Sejuani",
+    "senna": "Senna",
+    "velkoz": "Velkoz",
+    "masteryi": "MasterYi",
+    "gragas": "Gragas",
+    "smolder": "Smolder",
+    "renata": "Renata",
+    "garen": "Garen",
+    "urgot": "Urgot",
+    "azir": "Azir",
+    "teemo": "Teemo",
+    "shyvana": "Shyvana",
+    "samira": "Samira",
+    "zilean": "Zilean",
+    "amumu": "Amumu",
+    "skarner": "Skarner",
+    "trundle": "Trundle",
+    "udyr": "Udyr",
+    "quinn": "Quinn"
+  },
+  "positions": {
+    "TOP": "top",
+    "JUNGLE": "jungle",
+    "MIDDLE": "mid",
+    "BOTTOM": "adc",
+    "UTILITY": "support"
+  }
+}

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoLAdvisor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B45309'/><path d='M8 21l5-5 4 4 7-10' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<script>
+/* 启动看门狗（T39）：app.js 2.5s 内未 booted → 自动重载一次，仍失败 → 失败横幅。
+   inline 样式，不依赖 design-system.css。 */
+(function () {
+  function bootFail(code) {
+    var bar = document.getElementById("bootFailBar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "bootFailBar";
+      bar.setAttribute("role", "alert");
+      bar.style.cssText =
+        "position:fixed;top:0;left:0;right:0;z-index:400;display:flex;align-items:center;gap:12px;" +
+        "padding:10px 16px;background:#ffebeb;border-bottom:1px solid rgba(215,0,21,.4);" +
+        "color:#a30012;font-size:13px;line-height:1.5;" +
+        "font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;";
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = '<span style="flex:1">页面初始化失败，请重启应用（' + code + '）</span>' +
+      '<button type="button" style="flex:none;padding:5px 12px;border:0;border-radius:8px;background:#d70015;color:#fff;font-size:12px;cursor:pointer;font-family:inherit">重试</button>';
+    bar.querySelector("button").onclick = function () {
+      try { window.location.reload(); } catch (e) {}
+    };
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    window.setTimeout(function () {
+      var b = window.__LOL_APP_BOOTED__;
+      if (b === true) return;
+      var key = "app.bootWatchdog";
+      var count = 0;
+      try { count = parseInt(window.sessionStorage.getItem(key) || "0", 10) || 0; } catch (e) { count = 0; }
+      if (count < 1) {
+        try { window.sessionStorage.setItem(key, String(count + 1)); } catch (e) {}
+        try { window.location.reload(); } catch (e) {}
+        return;
+      }
+      var code = (typeof b === "string" && b.indexOf("error:") === 0) ? b.slice(6) : "timeout";
+      var note = "";
+      if (code === "timeout") {
+        /* 自诊断：区分 未加载 / 早期中断 / 绑定段未完成（T42） */
+        if (typeof window.LOL_DEMO === "undefined") {
+          note = "demo-data.js 未加载";
+        } else {
+          var theme = "";
+          try { theme = document.documentElement.getAttribute("data-theme") || ""; } catch (e) {}
+          note = (theme === "dark" || theme === "light") ? "app.js 绑定段未完成" : "app.js 未执行或早期中断";
+        }
+        try {
+          window.sessionStorage.setItem("app.bootDiagnosis", JSON.stringify({
+            reason: note,
+            booted: String(b == null ? "" : b),
+            at: new Date().toISOString(),
+          }));
+        } catch (e) {}
+      }
+      bootFail(code + (note ? "·" + note : ""));
+      /* T45：横幅/自诊断触发后继续观察——app.js 迟到但最终成功（booted 变 true）
+         时自动清除横幅与自愈计数，恢复正常，无需重启。 */
+      var watcher = window.setInterval(function () {
+        if (window.__LOL_APP_BOOTED__ === true) {
+          window.clearInterval(watcher);
+          var bar = document.getElementById("bootFailBar");
+          if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+          try { window.sessionStorage.removeItem("app.bootWatchdog"); } catch (e) {}
+          try { window.sessionStorage.removeItem("app.bootDiagnosis"); } catch (e) {}
+        }
+      }, 1000);
+    }, 5000);
+  });
+})();
+</script>
+<link rel="stylesheet" href="../design-system.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="app-rail" aria-label="侧栏">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 16l4.5-4.5 3.5 3.5L18 8" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <button type="button" class="rail-item" id="btnNavHome" data-view="home" aria-label="主页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M9.5 21v-6h5v6"/></svg>
+      <span>主页</span>
+    </button>
+    <button type="button" class="rail-item on" id="btnNavDraft" data-view="draft" aria-label="选人">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+      <span>选人</span>
+    </button>
+    <div class="rail-status" title="选人服务">
+      <span class="status-dot off" id="dotDraft"></span><span>选人</span>
+    </div>
+    <div class="rail-status" title="LCU 客户端">
+      <span class="status-dot off" id="dotLcu"></span><span>LCU</span>
+    </div>
+    <button type="button" class="rail-item" id="btnSettings" aria-label="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/></svg>
+      <span>设置</span>
+    </button>
+    <button type="button" class="rail-item" id="btnSelftest" aria-label="运行自检">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+      <span>自检</span>
+    </button>
+    <div class="rail-spacer"></div>
+    <div class="rail-status faint" id="railVersion" title="">v—</div>
+  </aside>
+
+  <main class="app-main">
+    <div id="viewDraft">
+      <div class="app-statusbar" id="statusbar">
+        <span class="pill" id="pillPhase">等待选人</span>
+        <span class="pill" id="pillClock">--</span>
+        <span class="pill pill-accent" id="pillRole">位置 —</span>
+        <span class="pill" id="pillUpdate">更新 —</span>
+        <span class="grow"></span>
+        <span class="pill pill-green" id="pillLcu"><span class="status-dot live"></span>LCU 已连接</span>
+        <span class="pill" id="pillMode">实时模式</span>
+      </div>
+
+      <div class="app-grid">
+        <section class="card entrance app-draft" id="draftCard" style="--i:0">
+          <h2 class="card-title" style="margin-bottom:8px">选人棋盘 <span class="sub" id="draftSub"></span></h2>
+          <div id="draftMain"></div>
+        </section>
+
+        <div class="app-side">
+          <section class="card entrance" style="--i:1">
+            <h2 class="card-title">赛前实力（段位分）<span id="rankPill"></span></h2>
+            <div class="kv" id="rankKv"></div>
+          </section>
+          <section class="card entrance" style="--i:2" id="adviceCard">
+            <h2 class="card-title">建议与事件 <span class="sub" id="adviceNote"></span></h2>
+            <div id="advice"></div>
+            <div class="advice-sep"></div>
+            <ul class="feed" id="feed"></ul>
+          </section>
+        </div>
+      </div>
+
+      <div class="app-grid-2 app-grid-3">
+        <section class="card entrance" id="curveCard" style="--i:3;padding:14px 18px">
+          <h2 class="card-title" style="margin-bottom:8px">胜率曲线 <span class="sub" id="curveNote">阵容走势 · 0–40 分钟</span></h2>
+          <div class="curve-legend" id="curveLegend"></div>
+          <div class="curve-wrap">
+            <svg class="curve" id="curve" viewBox="0 0 600 110" height="110" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="appGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#b45309" stop-opacity=".16"/>
+                  <stop offset="100%" stop-color="#b45309" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g id="curveSeries"></g>
+            </svg>
+            <div class="curve-y" id="curveY"><span>—</span><span>—</span><span>—</span></div>
+          </div>
+          <div class="curve-x"><span>0</span><span>10</span><span>20</span><span>30</span><span>40 分钟</span></div>
+        </section>
+
+        <section class="card entrance" id="candCard" style="--i:4;padding:14px 18px">
+          <h2 class="card-title" style="margin-bottom:8px">推荐英雄 <span class="sub" id="candRole"></span></h2>
+          <div class="cands" id="cands"></div>
+        </section>
+
+        <section class="card entrance jungler-panel hidden" id="junglerPanel" style="--i:5;padding:14px 16px" aria-label="打野雷达">
+          <h2 class="card-title" style="margin-bottom:6px">打野雷达 <span class="right"><span class="pill" id="jpStatePill">—</span></span></h2>
+          <div class="jp-capture" id="jpCapture">
+            <svg class="jp-map" viewBox="0 0 268 44" preserveAspectRatio="none" aria-hidden="true">
+              <rect class="m-bg" width="268" height="44"></rect>
+              <path class="m-river" d="M-10 44 C60 34 90 24 140 10 C190 -4 230 0 278 6"></path>
+              <path class="m-lane" d="M70 0 L78 44"></path>
+              <path class="m-lane" d="M134 0 L134 44"></path>
+              <path class="m-lane" d="M198 0 L206 44"></path>
+              <path class="m-lane" d="M0 12 L268 20"></path>
+              <path class="m-lane" d="M0 30 L268 26"></path>
+            </svg>
+            <img class="jp-frame" id="jpFrame" alt="采集帧" hidden>
+            <div class="jp-note" id="jpNote">采集未启动</div>
+          </div>
+          <div class="jp-jungler" id="jpJungler"></div>
+          <div class="jp-route" id="jpRoute"></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="viewProfile" class="hidden profile-view">
+      <section class="card entrance profile-hero" style="--i:0">
+        <span class="avatar profile-avatar" id="profileAvatar" style="--h:36"><span class="init">—</span></span>
+        <div class="grow" style="min-width:0">
+          <div class="profile-name" id="profileName">—</div>
+          <div class="row row-8" style="margin-top:4px">
+            <span class="pill" id="profileLevel">等级 —</span>
+            <span class="pill pill-green" id="profileLcu"><span class="status-dot live"></span>LCU 已连接</span>
+          </div>
+        </div>
+        <span class="pill" id="profileUpdate">更新 —</span>
+      </section>
+
+      <div class="rank-cards">
+        <section class="card entrance" id="rankSoloCard" style="--i:1">
+          <h2 class="card-title">单双排</h2>
+          <div id="rankSolo"></div>
+        </section>
+        <section class="card entrance" id="rankFlexCard" style="--i:2">
+          <h2 class="card-title">灵活排位</h2>
+          <div id="rankFlex"></div>
+        </section>
+      </div>
+
+      <section class="card entrance" id="matchesCard" style="--i:3;padding:14px 18px">
+        <h2 class="card-title" style="margin-bottom:8px">近期对局 <span class="sub" id="matchesNote"></span></h2>
+        <div class="match-list" id="matchList"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="settings-pop hidden" id="settingsPop" role="dialog" aria-label="设置">
+  <div class="row" style="justify-content:space-between;margin-bottom:6px">
+    <span style="font-size:13px;font-weight:600">设置</span>
+    <button type="button" class="pop-x" id="btnCloseSettings" aria-label="关闭设置">×</button>
+  </div>
+  <div class="setting-row" style="border-top:none;padding:7px 2px">
+    <div class="grow"><div class="k">主题</div><div class="h" id="themeHint">浅色暖色（当前）</div></div>
+    <button type="button" class="switch" role="switch" id="swTheme" aria-checked="false" aria-label="深色电竞主题"></button>
+  </div>
+  <div class="faint" style="font-size:11.5px">深色电竞（黑金 + 蓝紫霓虹）。切换立即生效并自动保存。</div>
+</div>
+
+<script>window.__APPV = (new URLSearchParams(location.search)).get("v") || "";</script>
+<script src="demo-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

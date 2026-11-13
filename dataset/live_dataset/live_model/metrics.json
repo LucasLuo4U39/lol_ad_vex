@@ -1,0 +1,87 @@
+{
+  "dataset": "../live_dataset.csv",
+  "rows": 579790,
+  "games": 2298,
+  "features": 30,
+  "featureColumns": [
+    "minute",
+    "role",
+    "ownLevel",
+    "ownGold",
+    "ownCS",
+    "ownKills",
+    "ownDeaths",
+    "ownAssists",
+    "teamKills",
+    "teamDeaths",
+    "teamAssists",
+    "teamCS",
+    "teamLevelSum",
+    "enemyKills",
+    "enemyDeaths",
+    "enemyAssists",
+    "enemyCS",
+    "enemyLevelSum",
+    "killDiff",
+    "deathDiff",
+    "assistDiff",
+    "csDiff",
+    "levelSumDiff",
+    "dragonDiff",
+    "baronDiff",
+    "heraldDiff",
+    "grubDiff",
+    "atakhanDiff",
+    "towerDiff",
+    "inhibitorDiff"
+  ],
+  "categoricalColumns": [
+    "role"
+  ],
+  "overall": {
+    "auc": 0.8249126261387651,
+    "logLoss": 0.5062268810518462,
+    "brier": 0.17036532791739706,
+    "accuracy": 0.7339536728815605,
+    "rows": 579790,
+    "baselineBrier": 0.25
+  },
+  "foldMetrics": [
+    {
+      "auc": 0.8323959849056155,
+      "logLoss": 0.49614339388358325,
+      "brier": 0.16669213033579833,
+      "accuracy": 0.738688524590164,
+      "fold": 1
+    },
+    {
+      "auc": 0.8373051899044205,
+      "logLoss": 0.48914285104902683,
+      "brier": 0.1643913010772126,
+      "accuracy": 0.7440034512510785,
+      "fold": 2
+    },
+    {
+      "auc": 0.822114296373365,
+      "logLoss": 0.510696110680953,
+      "brier": 0.17195567462168565,
+      "accuracy": 0.7337586206896551,
+      "fold": 3
+    },
+    {
+      "auc": 0.7981455967598099,
+      "logLoss": 0.5403503187603521,
+      "brier": 0.18297659492050777,
+      "accuracy": 0.7120689655172414,
+      "fold": 4
+    },
+    {
+      "auc": 0.8342262209728029,
+      "logLoss": 0.4947773235810761,
+      "brier": 0.16580222868838043,
+      "accuracy": 0.741262177773946,
+      "fold": 5
+    }
+  ],
+  "finalEstimators": 150
+}

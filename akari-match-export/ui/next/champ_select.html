@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>选人助手 · LoLAdvisor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23B45309'/><path d='M8 21l5-5 4 4 7-10' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="../design-system.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 16l4.5-4.5 3.5 3.5L18 8" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span>
+        <span class="brand-name" style="display:block">选人助手</span>
+        <span class="brand-sub" style="display:block">DRAFT ADVISOR</span>
+      </span>
+    </div>
+
+    <div class="odds grow" id="odds">
+      <div class="odds-nums">
+        <span class="side">我方</span>
+        <b class="b" id="pBlue">—</b>
+        <b class="r" id="pRed">—</b>
+        <span class="side">敌方</span>
+      </div>
+      <div class="odds-bar"><div class="odds-fill" id="pBar" style="--p:.5"></div></div>
+    </div>
+
+    <div class="row row-8" style="flex:none">
+      <span class="pill" id="pillUpdate">更新 —</span>
+      <span class="pill" id="pillPhase">等待选人</span>
+      <span class="pill" id="pillClock">--</span>
+      <span class="pill pill-accent" id="pillRole">位置 —</span>
+    </div>
+  </div>
+</header>
+
+<main class="container-fluid draft-page">
+  <div id="viewStatus"></div>
+
+  <div id="viewMain">
+    <section class="card bans-card" id="bansCard" style="--i:0">
+      <div class="ban-row" id="banMine"></div>
+      <div class="ban-mid">禁用</div>
+      <div class="ban-row right" id="banTheirs"></div>
+    </section>
+
+    <section class="card entrance" id="boardCard" style="--i:1;margin-top:10px">
+      <div class="draft-head">
+        <div class="teamlabel" style="color:var(--blue)">我方</div>
+        <div class="c">位置</div>
+        <div class="r teamlabel" style="color:var(--red)">敌方</div>
+      </div>
+      <div class="draft-board" id="board"></div>
+    </section>
+
+    <div class="grid grid-split" style="margin-top:10px;align-items:start">
+      <section class="card entrance" style="--i:2">
+        <h2 class="card-title">胜率曲线 <span class="sub" id="curveNote">每次选人更新</span></h2>
+        <div class="curve-wrap">
+          <svg class="curve" id="curve" viewBox="0 0 600 84" height="84" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="draftGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#007aff" stop-opacity=".18"/>
+                <stop offset="100%" stop-color="#007aff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path class="curve-area" fill="url(#draftGrad)" d=""></path>
+            <path class="curve-line" style="stroke:var(--blue)" d=""></path>
+            <circle class="curve-last" r="3.4" style="fill:var(--blue)" cx="-100" cy="-100"></circle>
+          </svg>
+          <div class="curve-y"><span id="curveMax">—</span><span id="curveMin">—</span></div>
+        </div>
+        <div class="curve-x"><span>BP 开始</span><span>现在</span></div>
+        <div class="attr-row" id="factorChips" style="margin-top:8px;padding-top:8px"></div>
+      </section>
+
+      <section class="card entrance" style="--i:3">
+        <h2 class="card-title">推荐英雄 <span class="sub" id="candRole"></span></h2>
+        <div class="cands" id="cands"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="demo-data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  const IS_DEMO = params.get("demo") === "1";
+  const DEMO = window.LOL_DEMO;
+  const UI = DEMO.UI;
+  UI.bootTheme(params);
+  const ROLE_CN = DEMO.roleCn;
+  const ROLES = DEMO.roles;
+  const $ = (id) => document.getElementById(id);
+  const PHASE_CN = {
+    BAN_PICK: "选人阶段", PLANNING: "预选阶段", FINALIZATION: "确认阶段",
+    GAME_STARTING: "即将开始", IN_GAME: "对局进行中", END_OF_GAME: "结算中", LAST_DRAFT: "最后阵容",
+  };
+
+  /* ---------------------------------------------------------- 渲染片段 */
+  function avatarHtml(champ, champId, cls) {
+    const name = champ || "";
+    const init = name.trim().slice(0, 1) || "·";
+    const img = !IS_DEMO && champId
+      ? '<img src="/icon/' + champId + '.png" alt="" onerror="this.remove()">'
+      : "";
+    return '<span class="avatar ' + (cls || "") + '" style="' + UI.avatarStyle(name) + '">' +
+      '<span class="init">' + UI.esc(init) + "</span>" + img + "</span>";
+  }
+
+  function slotHtml(p, right) {
+    const side = right ? " right" : "";
+    if (!p || !p.champ) {
+      const roleCn = (p && p.role && ROLE_CN[p.role]) || "";
+      return '<div class="draft-slot' + side + ' blank">' +
+        '<span class="avatar avatar-40 pending"><span class="init">' + UI.esc(roleCn ? roleCn.slice(0, 1) : "·") + "</span></span>" +
+        '<div class="draft-info"><div class="draft-champ">待选择</div><div class="draft-meta">&nbsp;</div></div></div>';
+    }
+    const tag = p.isMe ? '<span class="me-tag">我</span>' : "";
+    const rank = p.rank ? '<span class="draft-rank">' + UI.fmtInt(p.rank) + "</span>" : "";
+    return '<div class="draft-slot' + side + (p.isMe ? " me" : "") + '">' +
+      avatarHtml(p.champ, p.champId, "avatar-40" + (p.locked ? "" : " dim")) +
+      '<div class="draft-info">' +
+      '<div class="draft-champ">' + UI.esc(p.champ) + tag + "</div>" +
+      '<div class="draft-meta">' + UI.esc(p.name || "") + " " + rank + "</div>" +
+      "</div></div>";
+  }
+
+  function renderBoard(state) {
+    const roleIdx = (r) => { const i = ROLES.indexOf(r.role); return i === -1 ? 99 : i; };
+    const my = (state.myTeam || []).slice().sort((a, b) => roleIdx(a) - roleIdx(b));
+    const en = (state.theirTeam || []).slice().sort((a, b) => roleIdx(a) - roleIdx(b));
+    const rows = ROLES.map((role) => ({ role, me: null, en: null }));
+    my.forEach((p) => {
+      const slot = rows.find((r) => r.role === p.role && !r.me) || rows.find((r) => !r.me);
+      if (slot) slot.me = p;
+    });
+    en.forEach((p) => {
+      const slot = rows.find((r) => r.role === p.role && !r.en) || rows.find((r) => !r.en);
+      if (slot) slot.en = p;
+    });
+    $("board").innerHTML = rows.map((r) =>
+      '<div class="draft-row">' +
+      slotHtml(r.me, false) +
+      '<div class="vs-col"><span class="role">' + UI.esc(ROLE_CN[r.role] || r.role) + "</span></div>" +
+      slotHtml(r.en, true) +
+      "</div>"
+    ).join("");
+  }
+
+  function renderBans(state) {
+    const bans = state.bans || {};
+    const tile = (b) => {
+      if (!b || !b.name) return '<span class="ban-tile blank">·</span>';
+      return '<span class="ban-tile">' + avatarHtml(b.name, b.id, "avatar-28") + "</span>";
+    };
+    const mine = (bans.mine || []).slice(0, 5);
+    const theirs = (bans.theirs || []).slice(0, 5);
+    const pad = (arr, html) => { while (arr.length < 5) arr.push(null); return arr.map(tile).join(""); };
+    const hasBans = (bans.mine || []).length + (bans.theirs || []).length > 0;
+    $("bansCard").classList.toggle("hidden", !hasBans);
+    $("banMine").innerHTML = '<span class="ban-label">我方禁用</span>' + pad(mine);
+    $("banTheirs").innerHTML = pad(theirs) + '<span class="ban-label">敌方禁用</span>';
+  }
+
+  function renderCurve(state) {
+    const history = state.history || [];
+    const r = UI.drawCurve($("curve"), history.map((h) => h.p), { h: 84 });
+    if (r) {
+      $("curveMax").textContent = (r.hi * 100).toFixed(1) + "%";
+      $("curveMin").textContent = (r.lo * 100).toFixed(1) + "%";
+    } else {
+      $("curveMax").textContent = "—";
+      $("curveMin").textContent = "—";
+    }
+    $("factorChips").innerHTML = factorChipsHtml(state);
+  }
+
+  function factorChipsHtml(state) {
+    /* 选人因素 chips（T48）：同款样式逐项 delta（正绿负红） */
+    const f = state.factors || {};
+    const rs = state.rankStatus || {};
+    const chip = (k, v, cls) =>
+      '<span class="attr-chip ' + (cls || "zero") + '"><span class="k">' + k + '</span><span class="v">' + UI.esc(v) + "</span></span>";
+    const out = [];
+    if (f.myRank && f.theirRank) {
+      const d = Math.round(f.myRank - f.theirRank);
+      out.push(chip("段位", (d > 0 ? "+" : "") + d, d > 0 ? "pos" : d < 0 ? "neg" : "zero"));
+    } else if (state.rankError) {
+      out.push(chip("段位", state.rankError, "neg"));
+    } else if (rs.state === "resolving") {
+      out.push(chip("段位", "解析中", "zero"));
+    } else if (rs.state === "failed") {
+      out.push(chip("段位", "失败", "neg"));
+    } else if (rs.state === "unconnected") {
+      out.push(chip("段位", "未连接", "zero"));
+    }
+    if (f.champEdge !== null && f.champEdge !== undefined) out.push(chip("版本", UI.signed(f.champEdge, 1) + "pp", f.champEdge > 0 ? "pos" : f.champEdge < 0 ? "neg" : "zero"));
+    if (f.laneEdge !== null && f.laneEdge !== undefined) out.push(chip("对位", UI.signed(f.laneEdge, 1) + "pp", f.laneEdge > 0 ? "pos" : f.laneEdge < 0 ? "neg" : "zero"));
+    if (!out.length && state.modelAuc != null) out.push(chip("模型 AUC", String(state.modelAuc), "zero"));
+    if (!out.length) return "";
+    return '<span class="attr-label">因素</span>' + out.join("");
+  }
+
+  function renderCands(state) {
+    const candRole = $("candRole");
+    if (state.frozen) {
+      candRole.textContent = "";
+      $("cands").innerHTML = '<div class="faint" style="font-size:12.5px;padding:10px 2px">对局进行中，推荐已暂停</div>';
+      return;
+    }
+    candRole.textContent = state.myRoleCn ? "· " + state.myRoleCn : "";
+    const list = state.candidates || [];
+    $("cands").innerHTML = list.map((c, i) => {
+      const d = (c.prob - state.winProb) * 100;
+      const up = d >= 0;
+      return '<div class="lb-item' + (i === 0 ? " top" : "") + '">' +
+        '<span class="lb-rank">' + (i + 1) + "</span>" +
+        avatarHtml(c.champ, c.champId, "avatar-40") +
+        '<span class="lb-main"><span class="lb-name">' + UI.esc(c.champ) + '</span><span class="lb-reason">' + UI.esc(c.reason || "样本不足") + "</span></span>" +
+        '<span class="lb-score"><b class="' + (up ? "pos" : "neg") + '">' + (up ? "+" : "") + d.toFixed(1) + "pp</b><span>" + UI.fmtPct(c.prob) + "</span></span>" +
+        "</div>";
+    }).join("") ||
+      '<div class="faint" style="font-size:12.5px;padding:10px 2px">' +
+      (state.myRole ? "暂无推荐" : "位置未分配，先在客户端分配位置后再看推荐") + "</div>";
+  }
+
+  function updatePill() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    const via = IS_DEMO ? " · 演示" : (window.__sseAlive ? "" : " · 轮询");
+    $("pillUpdate").textContent = "更新 " + hh + ":" + mm + ":" + ss + via;
+  }
+
+  function render(state) {
+    showView("main");
+    const frozen = !!state.frozen;
+    $("pillPhase").textContent = frozen ? (PHASE_CN[state.phase] || "对局中") : (PHASE_CN[state.phase] || state.phase || "选人阶段");
+    $("pillClock").textContent = frozen ? "—" : (state.left > 0 ? Math.ceil(state.left) + "s" : "--");
+    $("pillRole").textContent = "位置 " + (state.myRoleCn || "—");
+    $("curveNote").textContent = frozen ? "开局前最后阵容 · 敌方由实时接口补全" : "每次选人更新";
+
+    const p = state.winProb;
+    UI.countUp($("pBlue"), p * 100, { fmt: (v) => v.toFixed(1) + "%" });
+    UI.countUp($("pRed"), (1 - p) * 100, { fmt: (v) => v.toFixed(1) + "%" });
+    UI.setP($("pBar"), p);
+
+    renderBans(state);
+    renderBoard(state);
+    renderCurve(state);
+    renderCands(state);
+    updatePill();
+  }
+
+  /* ---------------------------------------------------------- 三态视图 */
+  function showView(name) {
+    $("viewStatus").classList.toggle("hidden", name !== "status");
+    $("viewMain").classList.toggle("hidden", name !== "main");
+  }
+
+  function showLoading() {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="card" style="margin-bottom:10px"><div class="skeleton sk-line" style="width:240px"></div></div>' +
+      '<div class="card"><div class="skeleton sk-line" style="width:96px;margin-bottom:14px"></div>' +
+      [1, 2, 3, 4, 5].map(() =>
+        '<div class="row" style="gap:14px;padding:7px 0">' +
+        '<span class="skeleton sk-avatar"></span><span class="skeleton sk-line grow"></span>' +
+        '<span class="skeleton sk-avatar"></span><span class="skeleton sk-line grow"></span></div>'
+      ).join("") + "</div>" +
+      '<div class="grid grid-split" style="margin-top:10px;align-items:start">' +
+      '<div class="card"><div class="skeleton sk-line" style="width:96px;margin-bottom:14px"></div><div class="skeleton" style="height:118px"></div></div>' +
+      '<div class="card"><div class="skeleton sk-line" style="width:96px;margin-bottom:14px"></div>' +
+      [1, 2, 3].map(() => '<div class="row" style="gap:14px;padding:7px 0"><span class="skeleton sk-avatar"></span><span class="skeleton sk-line grow"></span></div>').join("") + "</div></div>";
+  }
+
+  function showEmpty(info) {
+    showView("status");
+    const lcu = (info && info.lcu) || {};
+    const status = lcu.connected
+      ? "LCU 已连接（端口 " + lcu.port + "）· 进入 BP 后自动刷新"
+      : "LCU 未连接：请确认客户端已启动并登录";
+    $("viewStatus").innerHTML =
+      '<div class="empty entrance" style="--i:0">' +
+      '<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>' +
+      '<div class="empty-title">' + UI.esc((info && info.message) || "等待进入选人阶段…") + "</div>" +
+      '<div class="empty-hint">' + UI.esc(status) + "</div>" +
+      '<div class="row row-8" style="margin-top:8px">' +
+      ["上", "打", "中", "下", "辅"].map((c) => '<span class="avatar avatar-40 pending"><span class="init">' + c + "</span></span>").join("") +
+      "</div>" +
+      (!IS_DEMO ? '<div class="empty-hint" style="margin-top:6px">提示：点击页面任意位置一次，切到游戏后页面也不会被浏览器休眠</div>' : "") +
+      "</div>";
+  }
+
+  function showError(info) {
+    showView("status");
+    $("viewStatus").innerHTML =
+      '<div class="stack stack-12" style="max-width:640px;margin:0 auto;padding-top:16px">' +
+      '<div class="alert entrance" style="--i:0">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4 3 19h18L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="16.8" r=".5" fill="currentColor"/></svg>' +
+      '<div class="grow">' + UI.esc((info && info.message) || "无法获取选人数据") +
+      (info && info.detail ? '<div class="faint" style="font-size:12px;margin-top:2px">' + UI.esc(info.detail) + "</div>" : "") + "</div>" +
+      '<button type="button" class="btn btn-sm btn-secondary" id="btnRetry">重试</button>' +
+      "</div>" +
+      '<div class="empty entrance" style="--i:1">' +
+      '<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg></div>' +
+      '<div class="empty-title">连接已断开</div>' +
+      '<div class="empty-hint">页面会持续自动重连；也可以手动点击重试。</div>' +
+      "</div></div>";
+    const btn = $("btnRetry");
+    if (btn) btn.addEventListener("click", () => (IS_DEMO ? resumeDemo() : reconnect()));
+  }
+
+  /* ---------------------------------------------------------- 实时数据源 */
+  function handleState(state) {
+    if (!state) return;
+    if (state.v && window.__htmlv && state.v !== window.__htmlv) { location.reload(); return; }
+    if (state.v) window.__htmlv = state.v;
+    try {
+      if (!state.ok) {
+        if (state.error) showError(state);
+        else showEmpty(state);
+      } else {
+        render(state);
+      }
+    } catch (e) {
+      showError({ error: true, message: "渲染异常", detail: String(e && e.message ? e.message : e) });
+    }
+  }
+
+  async function pollOnce() {
+    try {
+      const res = await fetch("/api/state", { cache: "no-store" });
+      handleState(await res.json());
+    } catch (e) { /* 网络抖动，下轮再试 */ }
+  }
+
+  function connectSse() {
+    if (window.__es) { try { window.__es.close(); } catch (e) {} }
+    try {
+      const es = new EventSource("/api/events");
+      window.__es = es;
+      es.onmessage = (e) => { try { handleState(JSON.parse(e.data)); } catch (err) {} };
+      es.onopen = () => { window.__sseAlive = true; };
+      es.onerror = () => {
+        window.__sseAlive = false;
+        try { es.close(); } catch (e) {}
+        setTimeout(connectSse, 2000);
+      };
+    } catch (e) {
+      setTimeout(connectSse, 2000);
+    }
+  }
+
+  function startHum() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx || window.__hum) return;
+      const ctx = new Ctx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001;
+      osc.frequency.value = 220;
+      osc.type = "sine";
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      window.__hum = { ctx, osc };
+    } catch (e) {}
+  }
+
+  let failCount = 0;
+  function reconnect() {
+    failCount = 0;
+    showLoading();
+    pollOnce();
+  }
+
+  /* ---------------------------------------------------------- 演示模式 */
+  const RANK = params.get("rank");
+  let demoStep = 5;
+  let demoTimer = null;
+
+  function applyDemoStep() {
+    let st = DEMO.draft.state(demoStep);
+    if (RANK && DEMO.rankStates[RANK]) st = DEMO.applyRankState(st, RANK);
+    handleState(st);
+  }
+
+  function resumeDemo() {
+    if (demoTimer) clearInterval(demoTimer);
+    applyDemoStep();
+    demoTimer = setInterval(() => {
+      demoStep = (demoStep + 1) % DEMO.draft.steps.length;
+      applyDemoStep();
+    }, 10000);
+  }
+
+  /* ---------------------------------------------------------- 启动 */
+  if (IS_DEMO) {
+    const initial = params.get("state") || "default";
+    UI.attachDemoPanel({
+      default: resumeDemo,
+      loading: () => { if (demoTimer) clearInterval(demoTimer); showLoading(); },
+      empty: () => { if (demoTimer) clearInterval(demoTimer); showEmpty(DEMO.draft.waiting); },
+      error: () => { if (demoTimer) clearInterval(demoTimer); showError(DEMO.draft.error); },
+    }, "选人助手");
+    if (initial === "loading") showLoading();
+    else if (initial === "empty") showEmpty(DEMO.draft.waiting);
+    else if (initial === "error") showError(DEMO.draft.error);
+    else resumeDemo();
+  } else {
+    showLoading();
+    connectSse();
+    pollOnce();
+    setInterval(pollOnce, 4000);
+    window.addEventListener("pointerdown", startHum, { once: true });
+  }
+})();
+</script>
+</body>
+</html>

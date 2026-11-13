@@ -1,0 +1,22 @@
+# akari-match-export dependencies
+# Sections:
+#   [inference]  required at runtime: web dashboard / replay / LCU / export chain
+#   [train/validate]  optional; only needed for dataset building, training and
+#                     model validation (build_*.py / train_*.py / validate_*.py /
+#                     test_elo.py). Skippable for a pure runtime install.
+#
+# [inference]
+numpy>=1.26,<3
+requests>=2.31,<3
+psutil>=5.9,<8
+zstandard>=0.22,<1
+mss>=9.0,<11
+Pillow>=10,<13
+#
+# [train/validate]
+pandas>=2.0,<4
+lightgbm==4.7.0
+scikit-learn>=1.4,<2
+#
+# [data]  optional; only needed for OP.GG data collection (opgg_scrape.py)
+beautifulsoup4>=4.12,<5

@@ -1,0 +1,30 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 构建产物
+build/
+dist/
+build_ui/
+*.spec.bak
+
+# 运行产物 / 敏感配置
+*.log
+selftest.log
+diag.log
+crash.log
+.env
+advisor.llm.env
+rank_cache.json
+elo_cache/
+rank_snapshots/
+
+# 数据（体积大，按 README 的数据管线自行生成）
+dataset/**/*.csv
+analysis/**/*.rofl
+*.zip
+_d3_tmp/
+_d3_monitor_tmp/
