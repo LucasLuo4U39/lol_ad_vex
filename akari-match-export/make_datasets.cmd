@@ -13,7 +13,7 @@ if not exist "%PY%" (
 )
 if "%~1"=="" (
     echo Usage: make_datasets.cmd "path\to\exports-folder" [output-dir]
-    echo   例: make_datasets.cmd "C:\Users\Administrator\Documents\akari-top300-exports"
+    echo   例: make_datasets.cmd "%USERPROFILE%\Documents\akari-top300-exports"
     echo   说明: exports 目录由 run-harvest.cmd 生成（每个对局一个 game_^<gameId^>^/）
     exit /b 1
 )

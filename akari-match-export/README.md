@@ -127,7 +127,7 @@ LeagueAkari-<名字>-<tag>-<时间戳>/
 ### 1. 采集 Challenger 前 N 名
 
 ```bat
-run-harvest.cmd --top 10 --games 10 --output "C:\Users\Administrator\Documents\akari-top10-exports"
+run-harvest.cmd --top 10 --games 10 --output "%USERPROFILE%\Documents\akari-top10-exports"
 ```
 
 - 从 LCU `/lol-ranked/v1/apex-leagues/RANKED_SOLO_5x5/CHALLENGER` 取前 N。
@@ -147,7 +147,7 @@ run-harvest.cmd --top 300 --games 20 --include-grandmaster --workers 8 --output 
 ### 2. 生成数据集
 
 ```bat
-run-dataset.cmd --export-root "C:\Users\Administrator\Documents\akari-top10-exports" --output "...\dataset"
+run-dataset.cmd --export-root "%USERPROFILE%\Documents\akari-top10-exports" --output "...\dataset"
 ```
 
 ### 3. 训练
@@ -794,7 +794,7 @@ isotonic 虽然把 ECE 降到 0.0044，但 Brier/LogLoss 变差；在校准曲�
 把多个导出目录合成一张按“一局一分钟一行”的训练表：
 
 ```bat
-run-dataset.cmd --export-root "C:\Users\Administrator\Documents\akari-exports"
+run-dataset.cmd --export-root "%USERPROFILE%\Documents\akari-exports"
 ```
 
 默认只保留 **排位峡谷（420/440、CLASSIC、map 11、时长 ≥ 10 分钟）**。
@@ -836,7 +836,7 @@ run-dataset.cmd --exports "...\LeagueAkari-A-..." "...\LeagueAkari-B-..."
 导出时默认会自动生成 `timeline/`（可用 `--no-timeline` 关闭）。也可以对已有导出目录单独生成：
 
 ```bat
-run-timeline.cmd --export "C:\Users\Administrator\Downloads\LeagueAkari\LeagueAkari-...-20261108-233745"
+run-timeline.cmd --export "%USERPROFILE%\Downloads\LeagueAkari\LeagueAkari-...-20261108-233745"
 ```
 
 输出：
@@ -884,7 +884,7 @@ run-timeline.cmd --export "C:\Users\Administrator\Downloads\LeagueAkari\LeagueAk
 zstd chunk + 256 字节签名 + 尾部 JSON 元数据。解包命令：
 
 ```bat
-run-unpack.cmd "C:\Users\Administrator\Downloads\LeagueAkari\...\replays\901126500254.rofl"
+run-unpack.cmd "%USERPROFILE%\Downloads\LeagueAkari\...\replays\901126500254.rofl"
 ```
 
 指定输出目录：
