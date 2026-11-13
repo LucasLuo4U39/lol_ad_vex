@@ -32,6 +32,6 @@ v2 新增重点：
 未包含：
 - akari-match-export/advisor.llm.env（个人 LLM API key，永不打入任何包）
 - akari-match-export/pyreqs/（pip 依赖，用 requirements.txt 重建）
-- 逐局导出 C:\Users\Administrator\Documents\akari-top300-exports\game_*（6.1GB）
+- 逐局导出 %USERPROFILE%\Documents\akari-top300-exports\game_*（6.1GB）
 - live_dataset_v3_partial.csv 等中间产物、_cmp_*/_smoke 训练工作目录
 - .venv（用 requirements.txt 重建）
