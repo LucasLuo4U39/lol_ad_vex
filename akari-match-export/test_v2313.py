@@ -45,11 +45,23 @@ FAKE_HISTORY = {
                 "gameCreation": 1763000000000,
                 "gameDuration": 1800,
                 "gameMode": "CLASSIC",
+                "queueId": 420,
                 "participants": [
                     {
                         "participantId": 11,
                         "championId": 91,
-                        "stats": {"win": True, "kills": 2, "deaths": 13, "assists": 16},
+                        "teamPosition": "MIDDLE",
+                        "stats": {
+                            "win": True,
+                            "kills": 2,
+                            "deaths": 13,
+                            "assists": 16,
+                            "totalMinionsKilled": 150,
+                            "neutralMinionsKilled": 14,
+                            "goldEarned": 12000,
+                            "totalDamageDealtToChampions": 21000,
+                            "visionScore": 25,
+                        },
                         "teamId": 100,
                     }
                 ],
@@ -100,6 +112,24 @@ def main():
               (profile.get("solo") or {}).get("tier") == "DIAMOND"
               and (profile.get("solo") or {}).get("lp") == 75,
               str(profile.get("solo")))
+
+        # T62：战绩检查补全
+        if matches:
+            m = matches[0]
+            check("A8 队列中文名", m.get("queueCn") == "单双排", str(m.get("queueCn")))
+            check("A9 补刀 = 150 + 14", m.get("cs") == 164, str(m.get("cs")))
+            check("A10 伤害/经济/视野", (m.get("damage"), m.get("gold"), m.get("vision")) == (21000, 12000, 25),
+                  f"{m.get('damage')}/{m.get('gold')}/{m.get('vision')}")
+            check("A11 位置中文", m.get("positionCn") == "中路", str(m.get("positionCn")))
+            check("A12 非重开", m.get("remake") is False, str(m.get("remake")))
+        summary = profile.get("matchSummary") or {}
+        check("A13 汇总局数/胜负", (summary.get("games"), summary.get("wins")) == (1, 1), str(summary))
+        check("A14 胜率 100", summary.get("winRate") == 100.0, str(summary.get("winRate")))
+        check("A15 KDA 比值 (2+16)/13≈1.38", abs(float(summary.get("kdaRatio") or 0) - 1.38) < 0.01,
+              str(summary.get("kdaRatio")))
+        check("A16 场均补刀 164/30≈5.5", abs(float(summary.get("avgCsPerMin") or 0) - 5.5) < 0.05,
+              str(summary.get("avgCsPerMin")))
+        check("A17 连胜 1", summary.get("streak") == 1 and summary.get("streakKind") == "win", str(summary))
 
         # ---------------- B. solo rank snapshot ----------------
         d._SOLO_RANK_CACHE.update(at=0.0, data=None)

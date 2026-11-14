@@ -1885,11 +1885,14 @@ body.demo-active .demo-panel {
 }
 .match-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto auto auto auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 6px 4px;
   border-bottom: 1px solid var(--line-soft);
+}
+.match-row.remake {
+  opacity: 0.55;
 }
 .match-row:last-child {
   border-bottom: 0;
@@ -1925,6 +1928,60 @@ body.demo-active .demo-panel {
 .match-pill {
   min-width: 38px;
   text-align: center;
+}
+.match-cs {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  text-align: right;
+  min-width: 46px;
+}
+.match-cs i {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--text-3);
+  margin-left: 2px;
+}
+.match-dmg {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  text-align: right;
+  min-width: 34px;
+}
+.match-ratio {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.match-ratio.pos {
+  color: var(--good, #35d07f);
+}
+.match-ratio.neg {
+  color: var(--bad, #ff5f6d);
+}
+.match-sum {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.match-sum span {
+  padding: 1px 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-2);
+}
+@media (max-width: 900px) {
+  .match-dmg {
+    display: none;
+  }
+  .match-row {
+    grid-template-columns: 44px minmax(0, 1fr) auto auto auto auto;
+  }
 }
 @media (max-width: 860px) {
   .rank-cards {

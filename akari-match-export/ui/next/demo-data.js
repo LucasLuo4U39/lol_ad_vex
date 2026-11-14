@@ -523,7 +523,8 @@
   /* ---------------------------------------------------------------- 个人主页（T33，/api/profile 形状草案） */
   function profileData() {
     const now = Date.now();
-    const match = (champKey, champId, win, k, d, a, gameTime, hoursAgo) => ({
+    const positions = ["中路", "打野", "下路", "辅助", "上路"];
+    const match = (champKey, champId, win, k, d, a, gameTime, hoursAgo, index) => ({
       champId,
       champ: CHAMPS[champKey] ? CHAMPS[champKey].cn : champKey,
       win,
@@ -532,29 +533,61 @@
       assists: a,
       gameTime,
       playedAt: new Date(now - hoursAgo * 3600e3).toISOString(),
+      /* T62：战绩检查补全字段 */
+      queueId: 420,
+      queueCn: index % 4 === 1 ? "灵活排位" : index % 5 === 3 ? "匹配" : "单双排",
+      cs: Math.round((gameTime / 60) * 6.2),
+      gold: Math.round((gameTime / 60) * 430),
+      damage: Math.round((gameTime / 60) * 950),
+      vision: 18 + (index % 14),
+      positionCn: positions[index % positions.length],
+      remake: false,
     });
+    const matches = [
+      match("ahri", 103, true, 8, 3, 11, 1732, 1, 0),
+      match("leesin", 64, false, 5, 7, 9, 1891, 3, 1),
+      match("jinx", 222, true, 12, 4, 8, 2104, 6, 2),
+      match("thresh", 412, true, 1, 5, 19, 1655, 9, 3),
+      match("garen", 86, false, 6, 8, 5, 1788, 14, 4),
+      match("vi", 254, true, 7, 3, 12, 1942, 22, 5),
+      match("syndra", 134, true, 9, 2, 7, 1602, 30, 6),
+      match("caitlyn", 51, false, 4, 6, 10, 2241, 46, 7),
+      match("lulu", 117, false, 2, 7, 14, 1568, 70, 8),
+      match("zed", 238, true, 11, 5, 6, 1853, 96, 9),
+      match("yasuo", 157, false, 3, 9, 4, 1745, 130, 10),
+      match("orianna", 61, true, 6, 2, 13, 2008, 190, 11),
+    ];
+    const wins = matches.filter((m) => m.win).length;
+    const kills = matches.reduce((s, m) => s + m.kills, 0);
+    const deaths = matches.reduce((s, m) => s + m.deaths, 0);
+    const assists = matches.reduce((s, m) => s + m.assists, 0);
+    const minutes = matches.reduce((s, m) => s + m.gameTime, 0) / 60;
+    const cs = matches.reduce((s, m) => s + m.cs, 0);
+    const streakKind = matches[0].win ? "win" : "loss";
+    let streak = 0;
+    for (const m of matches) {
+      if (m.win === (streakKind === "win")) streak += 1; else break;
+    }
+    const matchSummary = {
+      games: matches.length,
+      wins,
+      losses: matches.length - wins,
+      winRate: Math.round((wins * 1000) / matches.length) / 10,
+      kdaRatio: Math.round(((kills + assists) / Math.max(1, deaths)) * 100) / 100,
+      kills, deaths, assists,
+      avgCsPerMin: Math.round((cs / minutes) * 10) / 10,
+      avgDurationMin: Math.round((minutes / matches.length) * 10) / 10,
+      streak, streakKind,
+    };
     return {
       ok: true,
       summoner: { name: "雾岛听风#777", level: 328, iconId: 4868 },
       solo: { tier: "EMERALD", tierCn: "翡翠", division: "III", lp: 42, wins: 168, losses: 154, unranked: false },
       flex: { tier: null, tierCn: "", division: "", lp: 0, wins: 0, losses: 0, unranked: true },
-      matches: [
-        match("ahri", 103, true, 8, 3, 11, 1732, 1),
-        match("leesin", 64, false, 5, 7, 9, 1891, 3),
-        match("jinx", 222, true, 12, 4, 8, 2104, 6),
-        match("thresh", 412, true, 1, 5, 19, 1655, 9),
-        match("garen", 86, false, 6, 8, 5, 1788, 14),
-        match("vi", 254, true, 7, 3, 12, 1942, 22),
-        match("syndra", 134, true, 9, 2, 7, 1602, 30),
-        match("caitlyn", 51, false, 4, 6, 10, 2241, 46),
-        match("lulu", 117, false, 2, 7, 14, 1568, 70),
-        match("zed", 238, true, 11, 5, 6, 1853, 96),
-        match("yasuo", 157, false, 3, 9, 4, 1745, 130),
-        match("orianna", 61, true, 6, 2, 13, 2008, 190),
-      ],
+      matches,
+      matchSummary,
     };
   }
-
   const profileUnconnected = {
     ok: false,
     message: "客户端未连接",

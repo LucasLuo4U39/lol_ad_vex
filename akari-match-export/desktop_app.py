@@ -49,7 +49,7 @@ from rank_lookup import RankResolver, complete_payload_ranks, discover_lcu_psuti
 from live_features import rank_fallback_required
 
 APP_TITLE = "LoLAdvisor"
-APP_VERSION = "v2.3.16 · 2026-11-14"
+APP_VERSION = "v2.3.17 · 2026-11-14"
 
 EDGE_CANDIDATES = (
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -496,6 +496,64 @@ _TIER_CN = {
 }
 _UNRANKED_TIERS = {"", "NONE", "UNRANKED", "NA"}
 
+# T62：战绩检查用的队列 / 位置中文名
+_QUEUE_CN = {
+    420: "单双排",
+    440: "灵活排位",
+    400: "匹配",
+    430: "匹配",
+    490: "快速匹配",
+    450: "大乱斗",
+    900: "无限火力",
+    1700: "斗魂竞技场",
+}
+_POSITION_CN = {
+    "TOP": "上路",
+    "JUNGLE": "打野",
+    "MIDDLE": "中路",
+    "BOTTOM": "下路",
+    "UTILITY": "辅助",
+}
+
+
+def _match_summary(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """最近 N 局汇总：胜负、胜率、KDA、场均补刀/时长、连胜/连败。"""
+    games = [m for m in matches if isinstance(m, dict)]
+    total = len(games)
+    if not total:
+        return {
+            "games": 0, "wins": 0, "losses": 0, "winRate": 0.0,
+            "kdaRatio": 0.0, "avgCsPerMin": 0.0, "avgDurationMin": 0.0,
+            "streak": 0, "streakKind": "",
+        }
+    wins = sum(1 for m in games if m.get("win"))
+    kills = sum(int(m.get("kills") or 0) for m in games)
+    deaths = sum(int(m.get("deaths") or 0) for m in games)
+    assists = sum(int(m.get("assists") or 0) for m in games)
+    minutes = sum(float(m.get("gameTime") or 0) for m in games) / 60.0
+    cs = sum(int(m.get("cs") or 0) for m in games)
+    streak_kind = "win" if games[0].get("win") else "loss"
+    streak = 0
+    for match in games:
+        if bool(match.get("win")) == (streak_kind == "win"):
+            streak += 1
+        else:
+            break
+    return {
+        "games": total,
+        "wins": wins,
+        "losses": total - wins,
+        "winRate": round(wins * 100.0 / total, 1),
+        "kdaRatio": round((kills + assists) / max(1, deaths), 2),
+        "kills": kills,
+        "deaths": deaths,
+        "assists": assists,
+        "avgCsPerMin": round(cs / minutes, 1) if minutes > 0 else 0.0,
+        "avgDurationMin": round(minutes / total, 1),
+        "streak": streak,
+        "streakKind": streak_kind,
+    }
+
 
 def _ranked_tier(tier: Any) -> Optional[str]:
     """LCU 有时用 NONE/UNRANKED 表示未定级，统一归一成 None（不显示「已解析 0」）。"""
@@ -716,6 +774,16 @@ def _profile_payload() -> Dict[str, Any]:
                 ).isoformat()
             except Exception:  # noqa: BLE001
                 played_at = ""
+            queue_id = int(game.get("queueId") or 0)
+            duration = int(game.get("gameDuration") or 0)
+            minions = int(stats.get("totalMinionsKilled") or 0) + int(
+                stats.get("neutralMinionsKilled") or 0
+            )
+            position = str(
+                (participant or {}).get("teamPosition")
+                or (participant or {}).get("individualPosition")
+                or ""
+            )
             matches.append({
                 "champId": champ_id,
                 "champ": _champion_display(champ_id),
@@ -723,10 +791,20 @@ def _profile_payload() -> Dict[str, Any]:
                 "kills": int(stats.get("kills") or 0),
                 "deaths": int(stats.get("deaths") or 0),
                 "assists": int(stats.get("assists") or 0),
-                "gameTime": int(game.get("gameDuration") or 0),
+                "gameTime": duration,
                 "playedAt": played_at,
+                # T62：战绩检查补全（队列 / 补刀 / 经济 / 伤害 / 视野 / 位置 / 重开）
+                "queueId": queue_id,
+                "queueCn": _QUEUE_CN.get(queue_id, "其他"),
+                "cs": minions,
+                "gold": int(stats.get("goldEarned") or 0),
+                "damage": int(stats.get("totalDamageDealtToChampions") or 0),
+                "vision": int(stats.get("visionScore") or 0),
+                "positionCn": _POSITION_CN.get(position.upper(), ""),
+                "remake": bool(duration and duration < 300),
             })
         profile["matches"] = matches
+        profile["matchSummary"] = _match_summary(matches)
         data = profile
     _PROFILE_CACHE.update(at=now, data=data)
     return data

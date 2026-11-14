@@ -556,12 +556,40 @@
     const kda = (m.kills != null && m.deaths != null && m.assists != null)
       ? m.kills + " / " + m.deaths + " / " + m.assists
       : "—";
-    return '<div class="match-row">' +
+    /* T62：KDA 比值（(K+A)/D）按档着色 */
+    const ratio = (m.kills != null && m.deaths != null && m.assists != null)
+      ? (m.kills + m.assists) / Math.max(1, m.deaths) : null;
+    const ratioCls = ratio == null ? "" : ratio >= 5 ? "pos" : ratio < 1.5 ? "neg" : "";
+    const ratioHtml = ratio == null ? ""
+      : '<span class="match-ratio ' + ratioCls + '">' + ratio.toFixed(2) + "</span>";
+    const sub = [m.queueCn, m.positionCn, relTime(m.playedAt)].filter(Boolean).join(" · ");
+    const cs = (m.cs != null) ? m.cs : "—";
+    const dmg = (m.damage != null) ? Math.round(m.damage / 1000) + "k" : "—";
+    const resultPill = m.remake ? '<span class="pill match-pill">重开</span>' : wl;
+    return '<div class="match-row' + (m.remake ? " remake" : "") + '">' +
       avatarHtml(m.champ, m.champId, "avatar-44") +
-      '<span class="match-info"><span class="match-champ">' + UI.esc(m.champ || "—") + '</span><span class="match-time" style="display:block">' + UI.esc(relTime(m.playedAt)) + "</span></span>" +
-      '<span class="match-kda">' + kda + "</span>" +
+      '<span class="match-info"><span class="match-champ">' + UI.esc(m.champ || "—") + '</span>' +
+      '<span class="match-time" style="display:block">' + UI.esc(sub || "—") + "</span></span>" +
+      '<span class="match-kda">' + kda + ratioHtml + "</span>" +
+      '<span class="match-cs" title="补刀">' + cs + '<i>CS</i></span>' +
+      '<span class="match-dmg" title="对英雄伤害">' + dmg + "</span>" +
       '<span class="match-len">' + UI.mmss(m.gameTime) + "</span>" +
-      wl + "</div>";
+      resultPill + "</div>";
+  }
+
+  function matchSummaryHtml(s) {
+    if (!s || !s.games) return "";
+    const streak = s.streak ? (s.streakKind === "win" ? "连胜 " : "连败 ") + s.streak : "";
+    const bits = [
+      "近 " + s.games + " 局",
+      s.wins + "胜" + s.losses + "负",
+      "胜率 " + s.winRate + "%",
+      "KDA " + s.kdaRatio,
+      "场均 " + s.avgDurationMin + " 分钟",
+      "补刀 " + s.avgCsPerMin + "/分",
+      streak,
+    ].filter(Boolean);
+    return '<span class="match-sum">' + bits.map((t) => "<span>" + UI.esc(t) + "</span>").join("") + "</span>";
   }
 
   function renderProfile(p) {
@@ -605,7 +633,7 @@
     $("rankSolo").innerHTML = rankCardHtml(p.solo);
     $("rankFlex").innerHTML = rankCardHtml(p.flex);
     const matches = p.matches || [];
-    $("matchesNote").textContent = matches.length ? "共 " + matches.length + " 局" : "";
+    $("matchesNote").innerHTML = matchSummaryHtml(p.matchSummary);
     $("matchList").innerHTML = matches.map(matchRowHtml).join("") ||
       '<div class="faint" style="font-size:12.5px;padding:10px 2px">暂无对局记录</div>';
   }

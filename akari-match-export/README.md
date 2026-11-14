@@ -14,7 +14,7 @@
 - **运行前提**：英雄联盟客户端运行并已登录（LCU REST + Live Client Data 2999 + SGP 战绩服务）
 - 所有 `.cmd` 启动器的 Python 探测顺序：项目 `.venv` →
   `%USERPROFILE%\.dsh\dsh-runtimes\...\python.exe` → `py -3` → PATH 里的 `python`
-- 当前版本见 `VERSION.txt`（v2.3.16；一体化单页 + 深色电竞主题 + 主页视图，胜率归因 + 打野雷达 + 左下角悬浮窗）
+- 当前版本见 `VERSION.txt`（v2.3.17；一体化单页 + 深色电竞主题 + 主页视图，胜率归因 + 打野雷达 + 左下角悬浮窗）
 
 ## 快速开始
 

@@ -363,14 +363,26 @@ T47 model-dev 输出为准）。对局页（app.html）在胜率条下方渲染�
             "wins": 0, "losses": 0, "unranked": true },        // 未定级：unranked=true，其余可空
   "matches": [                                                  // 最近 ≥10 局，新→旧
     { "champId": 103, "champ": "阿狸", "win": true, "kills": 8, "deaths": 3,
-      "assists": 11, "gameTime": 1732, "playedAt": "2026-11-11T22:41:00+08:00" }
-  ]
+      "assists": 11, "gameTime": 1732, "playedAt": "2026-11-11T22:41:00+08:00",
+      // T62：战绩检查补全
+      "queueId": 420, "queueCn": "单双排", "cs": 214, "gold": 14200,
+      "damage": 32500, "vision": 28, "positionCn": "中路", "remake": false }
+  ],
+  "matchSummary": {                                             // T62：近 N 局汇总
+    "games": 10, "wins": 6, "losses": 4, "winRate": 60.0,
+    "kdaRatio": 3.2, "kills": 62, "deaths": 38, "assists": 96,
+    "avgCsPerMin": 6.9, "avgDurationMin": 31.2,
+    "streak": 2, "streakKind": "win"
+  }
 }
 ```
 
 - `tier` 用 LCU 常量（EMERALD/PLATINUM…）+ `tierCn` 中文名；前端兼容 `tierCn` 缺失（显示 tier）。
 - 召唤师头像：`GET /icon/profile/<iconId>.png`（桌面版代理 LCU 头像资源；404 时前端降级
   首字渐变块）；对局英雄头像复用 `/icon/<champId>.png`。
+- T62：`matches[]` 增加 `queueId/queueCn/cs/gold/damage/vision/positionCn/remake`，
+  顶层增加 `matchSummary`（胜率、KDA 比值、场均补刀与时长、连胜/连败）；
+  这些字段都是可选增强，前端渲染时按缺省值降级（不阻塞旧数据）。
 - app.html 侧栏新增「主页」导航（与「选人」两视图切换，默认选人）；
   演示：`?demo=1&view=home`（完整样例）、`?profile=offline`（客户端未连接空态样例）、
   `&theme=dark` 深色；截图 `ui/next/previews/home-profile-*.png`。
